@@ -11,7 +11,7 @@ class ConfigChief
   def initialize(options = {})
     @api_key = options[:api_key]
     @workspace = options[:workspace]
-    self.class.base_uri options[:url] || 'http://localhost:3000/api/v1'
+    self.class.base_uri options[:url] || 'https://api.thecloudblocks.com'
   end
   
   def get_value(key, options = {}, params = {} )
@@ -74,11 +74,3 @@ class ConfigChief
   end
   
 end
-
-cc = ConfigChief.new(:api_key => "92647a801ab5e9d94066abfb9f34ef4a", :workspace => "06b8a8ba1309e6253a3d53ec5486737b")
-#puts cc.get_value('a.b.c')
-#puts cc.set_value('x.y.z', 'zibzib')
-#puts cc.register_node(:node_type_id => 5, :node_name => 'from api', :node_timezone => 'UTC')
-puts cc.unregister_node('83fb99f4a84aabffeb79a02c5a944a15')
-#puts cc.update_node_status('83fb99f4a84aabffeb79a02c5a944a15', 1)
-#puts cc.config_items
