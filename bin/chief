@@ -1,0 +1,73 @@
+#!/usr/bin/env ruby
+
+require 'yaml'
+require 'config-chief'
+require 'optparse'
+
+config_file = 'chief.yaml'
+config_dir = File.join(Dir.home, '.chief')
+config_full = File.join(config_dir, config_file)
+
+api_key = ''
+if File.exists?(config_full)	
+	# config file present
+	config = YAML::load(File.open(config_full))
+	api_key = config['api_key']
+else
+	# no config file
+	puts 'CloudBlocks ConfigChief'
+	puts 'Please enter your API key. (you can find it at https://www.thecloudblocks.com/me):'
+	api_key = gets
+	api_key = api_key.chomp
+	if api_key.length != 32
+		puts 'Invalid API key'
+		exit -1
+	else
+		if !FileTest::directory?(config_dir)
+			Dir.mkdir(config_dir)
+		end
+		File.open(config_full, 'w+') { |out| YAML::dump({ 'api_key' => api_key }, out) }
+		puts 'Configuration Saved'
+	end
+end
+
+workspace = nil
+key = nil
+parameters = {}
+OptionParser.new do |opts|
+	opts.banner = "Usage: chief [options]"
+
+	opts.on("-w", "--workspace WORKSPACE", "Workspace id") do |workspace_id|
+		workspace = workspace_id
+	end
+
+	opts.on('-k', '--key KEY', 'Config Key') do |key_id|
+		key = key_id
+	end
+
+	opts.on('-p', '--parameters P1=V1,P2=V2,...', Array, 'Optional Parameters') do |params|
+		params.each do |p|
+			pv = p.split('=')
+			if pv.count != 2 || pv[0].nil? || pv[1].nil?
+				warn 'Invalid Parameters. Use -h for help'
+				exit -1
+			end
+
+			parameters = parameters.merge({pv[0].to_sym => pv[1]})
+		end
+	end
+
+	opts.on_tail("-h", "--help", "Show this message") do
+		puts opts
+		exit 0
+	end
+end.parse!
+
+if workspace.nil?
+	warn 'No workspace specified. Use -h for help.'
+	exit -1 
+end
+
+# let's get to bussiness
+chief = ConfigChief.new(:api_key => api_key, :workspace => workspace)
+puts chief.get_value(key, {}, parameters)
