@@ -48,7 +48,7 @@ OptionParser.new do |opts|
 	opts.on('-u', '--url URL', 'Server URL') do |server_url|
 		url = server_url
 	end
-	url = url || 'http://www.thecloudblocks.com:8080/cheif'
+	url = url || 'http://www.thecloudblocks.com:8080/chief'
 
 	opts.on('-k', '--key KEY', 'Config Key') do |key_id|
 		key = key_id
