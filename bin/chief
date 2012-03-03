@@ -3,6 +3,8 @@
 require 'yaml'
 require 'config-chief'
 require 'optparse'
+require 'eventmachine'
+require 'faye'
 
 config_file = 'chief.yaml'
 config_dir = File.join(Dir.home, '.chief')
@@ -33,13 +35,20 @@ end
 
 workspace = nil
 key = nil
+is_test = false
 parameters = {}
+url = nil
 OptionParser.new do |opts|
 	opts.banner = "Usage: chief [options]"
 
 	opts.on("-w", "--workspace WORKSPACE", "Workspace id") do |workspace_id|
 		workspace = workspace_id
 	end
+
+	opts.on('-u', '--url URL', 'Server URL') do |server_url|
+		url = server_url
+	end
+	url = url || 'http://www.thecloudblocks.com:8080/cheif'
 
 	opts.on('-k', '--key KEY', 'Config Key') do |key_id|
 		key = key_id
@@ -57,6 +66,10 @@ OptionParser.new do |opts|
 		end
 	end
 
+	opts.on('-t', '--test', 'Test mode. Shows updates received from the server') do |test|
+		is_test = true
+	end
+
 	opts.on_tail("-h", "--help", "Show this message") do
 		puts opts
 		exit 0
@@ -68,6 +81,18 @@ if workspace.nil?
 	exit -1 
 end
 
-# let's get to bussiness
-chief = ConfigChief.new(:api_key => api_key, :workspace => workspace)
-puts chief.get_value(key, {}, parameters)
+if is_test
+	EM.run {
+		puts "Listening for #{workspace}/keys now on #{url}"
+		client = Faye::Client.new(url)
+		client.subscribe("/#{workspace}/keys") do |message|
+    		puts message.inspect
+		end
+	}
+else
+	# let's get to bussiness
+	chief = ConfigChief.new(:api_key => api_key, :workspace => workspace)
+	puts chief.get_value(key, {}, parameters)
+end
+
+

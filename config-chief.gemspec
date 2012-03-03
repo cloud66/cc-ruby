@@ -9,6 +9,8 @@ Gem::Specification.new do |s|
   s.files       = ["lib/config-chief.rb"]
   s.add_dependency('httparty', '>= 0.8.1')
   s.add_dependency('json', '>= 1.6.3')
+  s.add_dependency('eventmachine', '>=0.12.10')
+  s.add_dependency('faye', '>=0.8.0')
   s.homepage    = 'http://www.thecloudblocks.com'
   s.executables << 'chief'
 end
