@@ -11,7 +11,7 @@ config_dir = File.join(Dir.home, '.chief')
 config_full = File.join(config_dir, config_file)
 
 api_key = ''
-faye_url = 'https://socket.thecloudblocks.com'
+faye_url = 'https://socket.thecloudblocks.com/chief'
 
 if File.exists?(config_full)	
 	# config file present
@@ -88,7 +88,7 @@ if workspace.nil?
 	exit -1 
 end
 
-if key.nil? && id.nil?
+if key.nil? && id.nil? && !is_test
 	warn 'Either id (-i) or key (-k) have to be present'
 	exit -1
 end
