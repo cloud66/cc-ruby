@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'config-chief'
-  s.version     = '0.0.1'
-  s.date        = '2012-02-28'
+  s.version     = '0.0.2'
+  s.date        = '2012-03-04'
   s.summary     = "CloudBlocks ConfigChief Ruby Gem"
   s.description = "Simple and easy configuration for ruby/rails apps. See http://www.thecloudblocks.com for more info"
   s.authors     = ["Khash Sajadi"]

@@ -14,7 +14,7 @@ class ConfigChief
     self.class.base_uri options[:url] || 'https://api.thecloudblocks.com'
   end
   
-  def get_value(key, options = {}, params = {} )
+  def get_by_key(key, options = {}, params = {})
     opts = {
       :default_value => nil,
       :full_obj => false
@@ -28,6 +28,30 @@ class ConfigChief
     headers = { :headers => http_headers.merge(optionals) }
     
     result = self.class.get("/workspaces/#{@workspace}/value.json", headers.merge(:query => { :query => key } ))
+    
+    if result.response.code.to_i == 200
+      retrieved = result.parsed_response 
+      return retrieved if opts[:full_obj]
+      return retrieved['parsed_value']
+    end
+    
+    return opts[:default_value]
+  end
+
+  def get_by_id(id, options = {}, params = {})
+    opts = {
+      :default_value => nil,
+      :full_obj => false
+    }.merge(options)
+    
+    optionals = {}
+    params.each do |k, v|
+      optionals["cc-#{k}"] = v
+    end
+    
+    headers = { :headers => http_headers.merge(optionals) }
+    
+    result = self.class.get("/workspaces/#{@workspace}/config_keys/#{id}.json", headers )
     
     if result.response.code.to_i == 200
       retrieved = result.parsed_response 

@@ -11,6 +11,8 @@ config_dir = File.join(Dir.home, '.chief')
 config_full = File.join(config_dir, config_file)
 
 api_key = ''
+faye_url = 'https://socket.thecloudblocks.com'
+
 if File.exists?(config_full)	
 	# config file present
 	config = YAML::load(File.open(config_full))
@@ -38,6 +40,7 @@ key = nil
 is_test = false
 parameters = {}
 url = nil
+id = nil
 OptionParser.new do |opts|
 	opts.banner = "Usage: chief [options]"
 
@@ -48,10 +51,14 @@ OptionParser.new do |opts|
 	opts.on('-u', '--url URL', 'Server URL') do |server_url|
 		url = server_url
 	end
-	url = url || 'http://www.thecloudblocks.com:8080/chief'
+	url = url || 'https://api.thecloudblocks.com'
 
 	opts.on('-k', '--key KEY', 'Config Key') do |key_id|
 		key = key_id
+	end
+
+	opts.on('-i', '--id ID', 'Config Id') do |config_id|
+		id = config_id
 	end
 
 	opts.on('-p', '--parameters P1=V1,P2=V2,...', Array, 'Optional Parameters') do |params|
@@ -81,18 +88,27 @@ if workspace.nil?
 	exit -1 
 end
 
+if key.nil? && id.nil?
+	warn 'Either id (-i) or key (-k) have to be present'
+	exit -1
+end
+
 if is_test
 	EM.run {
-		puts "Listening for #{workspace}/keys now on #{url}"
-		client = Faye::Client.new(url)
+		puts "Listening for #{workspace}/keys now on #{faye_url}"
+		client = Faye::Client.new(faye_url)
 		client.subscribe("/#{workspace}/keys") do |message|
     		puts message.inspect
 		end
 	}
 else
-	# let's get to bussiness
-	chief = ConfigChief.new(:api_key => api_key, :workspace => workspace)
-	puts chief.get_value(key, {}, parameters)
+	chief = ConfigChief.new(:api_key => api_key, :workspace => workspace, :url => url)
+	if (key.nil?)
+		puts chief.get_by_id(id, {}, parameters)
+	else
+		# let's get to bussiness
+		puts chief.get_by_key(key, {}, parameters)
+	end
 end
 
 
