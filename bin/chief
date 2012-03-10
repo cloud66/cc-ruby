@@ -11,7 +11,7 @@ config_dir = File.join(Dir.home, '.chief')
 config_full = File.join(config_dir, config_file)
 
 api_key = ''
-faye_url = 'https://socket.thecloudblocks.com/chief'
+faye_url = 'https://socket.thecloudblocks.com:8443/chief'
 
 if File.exists?(config_full)	
 	# config file present
@@ -55,6 +55,10 @@ OptionParser.new do |opts|
 
 	opts.on('-k', '--key KEY', 'Config Key') do |key_id|
 		key = key_id
+	end
+
+	opts.on('--api-key APIKEY', 'API key') do |apikey|
+		api_key = apikey
 	end
 
 	opts.on('-i', '--id ID', 'Config Id') do |config_id|
