@@ -36,6 +36,12 @@ class CloudQuartz
 		result.parsed_response
 	end
 
+	def status(stat, version, plugins)
+		data = { :status => stat, :version => version, :plugins => plugins }
+		result = self.class.post("/agent/#{@agent_id}/status.json", { :headers => http_headers.merge({'Content-Type' => 'application/json'}), :body => data.to_json })
+		result.parsed_response
+	end
+
 	private
 
 	def http_headers

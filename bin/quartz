@@ -104,6 +104,7 @@ end
 
 def start
 	@log.info "Starting CloudQuartz agent"
+	@quartz.status(1, @version, plugin_meta_data)
 
 	# TEMP
 	EM.run {
@@ -116,6 +117,8 @@ end
 
 def stop
 	@log.info "Stopping CloudQuartz agent"
+	@quartz.status(2, @version, plugin_meta_data)
+
 end
 
 def restart
@@ -162,14 +165,23 @@ def load_plugins
 					instance = clazz.new(@log, { :api_key => @api_key, :agent_id => @agent_id })
 					guid = instance.guid
 					@plugins = @plugins.merge({ guid => instance })
-					@log.info "Found plugin #{clazz.name} with uid #{guid}"
+					@log.info "Found plugin #{instance.name}/#{instance.version} with uid #{guid}"
 				end
 			rescue
 			end
 		end
 	end
 
-	@log.debug "All plugins #{@plugins}"
+	@log.debug "All plugins #{plugin_meta_data}"
+end
+
+def plugin_meta_data
+	result = []
+	@plugins.each do |k, v|
+		result << { :name => v.name, :version => v.version }
+	end
+
+	result
 end
 
 def get_job
@@ -190,7 +202,7 @@ def get_job
 			if @plugins.include?(guid)
 				plugin = @plugins[guid]
 				# run it
-				run_plugin(plugin, message)
+				fork { run_plugin(plugin, message) }
 			else
 				@log.error "No plugin found with uid #{guid}"
 				# TODO: Send this back to server as run error
@@ -221,7 +233,11 @@ def run_plugin(plugin, message)
 	rescue => exc
 		@log.error "Failure during running plugin #{plugin} due to #{exc}"
 		ok = false
-		to_return = result[:message]
+		if result.nil?
+			to_return = exc.message
+		else
+			to_return = result[:message] 
+		end
 	ensure
 		data = { :run_start => run_start, :run_end => Time.now.utc.to_i, :agent_uid => @agent_id, :ok => ok }
 		data = ok ? data.merge({ :run_result => to_return }) : data.merge({ :fail_reason => to_return })

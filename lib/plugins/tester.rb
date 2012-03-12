@@ -5,6 +5,14 @@ class Tester < QuartzPlugin
 		"c0bb6ed7950b489f9abba8071ff0e0ab"
 	end
 
+	def name
+		"Tester"
+	end
+
+	def version
+		"0.0.0"
+	end
+
 	def run(message)
 		@log.info "Running with #{message}"
 		i = Random.rand(10)
@@ -12,6 +20,6 @@ class Tester < QuartzPlugin
 		sleep i
 		@log.info "Done"
 
-		{ :ok => true, :message => "Super! Done in #{i} seconds" }
+		run_result(true, "Super! Done in #{i} seconds")
 	end
-end
+end	
