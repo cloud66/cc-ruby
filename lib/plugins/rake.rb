@@ -2,11 +2,11 @@ require File.join(File.dirname(__FILE__), 'quartz_plugin')
 
 class Rake < QuartzPlugin
 	def guid
-		"20e07c656e2f477d969e9561e13229fb"
+		"62e3583abfc24f209916c4ff97661fa0"
 	end
 
 	def name
-		"Shell"
+		"Rake"
 	end
 
 	def version
@@ -16,14 +16,15 @@ class Rake < QuartzPlugin
 	def run(message)
 		@log.debug "Running with #{message}"
 		payload = payload(message)
-		command = payload['command']
+		task = payload['task']
+		location = payload['location']
 		params = payload['params']
-		@log.info "Shell command '#{command}' with '#{params}'"
+		@log.info "Rake #{task} in #{location} with params:#{params}"
 
 		begin
-			return run_shell(command, params)
+			return run_shell("bundle", "exec rake #{task} #{params}")
 		rescue => ex
-			run_result(false, "Failed to run shell command due to #{ex}")
+			run_result(false, "Failed to run rake due to #{ex}")
 		end
 	end
 end	

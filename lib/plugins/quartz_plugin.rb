@@ -1,3 +1,5 @@
+require 'open4'
+
 class QuartzPlugin
 	
 	def initialize(log, options)
@@ -26,4 +28,14 @@ class QuartzPlugin
 		v
 	end
 
+	def run_shell(command, params)
+		pid, stdin, stdout, stderr = Open4::popen4("#{command} #{params}")
+		ignored, status = Process::waitpid2 pid
+
+		if status.exitstatus == 0
+			run_result(true, stdout.read.strip)
+		else
+			run_result(false, stderr.read.strip)
+		end
+	end
 end

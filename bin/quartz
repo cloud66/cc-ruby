@@ -108,9 +108,11 @@ def start
 
 	# TEMP
 	EM.run {
-		while true do
+		Signal.trap('INT') { stop }
+    	Signal.trap('TERM'){ stop }
+    
+		EM.add_periodic_timer 5 do
 			get_job
-			sleep 5
 		end
 	}
 end
@@ -118,7 +120,7 @@ end
 def stop
 	@log.info "Stopping CloudQuartz agent"
 	@quartz.status(2, @version, plugin_meta_data)
-
+	EM.stop
 end
 
 def restart
@@ -178,7 +180,7 @@ end
 def plugin_meta_data
 	result = []
 	@plugins.each do |k, v|
-		result << { :name => v.name, :version => v.version }
+		result << { :name => v.name, :version => v.version, :uid => v.guid }
 	end
 
 	result
