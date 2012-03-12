@@ -1,0 +1,250 @@
+#!/usr/bin/env ruby
+
+require 'yaml'
+require '../lib/cloud-quartz'
+require 'optparse'
+require 'eventmachine'
+require 'faye'
+require 'socket'
+require 'logger'
+
+@version = 0
+
+@log = Logger.new(STDOUT)
+@log.level = Logger::DEBUG
+
+config_file = 'cloudblocks.yaml'
+@config_dir = File.join(Dir.home, '.cloudblocks')
+@config_full = File.join(@config_dir, config_file)
+
+@api_key = ''
+faye_url = 'https://socket.thecloudblocks.com:8443/'
+commands = %w[start stop register unregister restart]
+
+@plugins = {}
+
+is_test = false
+@url = nil
+command = nil
+@agent_id = nil
+OptionParser.new do |opts|
+	opts.banner = "Usage: quartz [register|unregister|start|stop|restart] [options]"
+
+	opts.on('-u', '--url URL', 'Server URL') do |server_url|
+		@url = server_url
+	end
+	@url = @url || 'https://api.thecloudblocks.com'
+
+	opts.on('--agent-id AGENTID', 'Agent id') do |agent|
+		@agent_id = agent
+	end
+
+	opts.on('--api-key APIKEY', 'API key') do |apikey|
+		@api_key = apikey
+	end
+
+	opts.on('-t', '--test', 'Test mode. Fetches jobs from the server but doesn\'t run them') do |test|
+		is_test = true
+	end
+
+	opts.on_tail("-h", "--help", "Show this message") do
+		puts opts
+		puts 'Commands:'
+		puts 'register: Register the agent'
+		puts 'unregister: Unregister the agent'
+		puts 'start: Starts agent as deamon'
+		puts 'stop: Stops agent daemon'
+		puts 'restart: Restart agent daemon'
+		exit 0
+	end
+end.parse!
+
+command = ARGV[0].downcase unless ARGV[0].nil?
+
+if @api_key.empty? && File.exists?(@config_full)
+	# config file present
+	config = YAML::load(File.open(@config_full))
+	@api_key = config['api_key']
+	@agent_id = config['agent_id']
+elsif @api_key.empty? && command != 'register'
+	# no config file
+	puts 'CloudBlocks CloudQuartz'
+	puts 'Please enter your API key. (you can find it at https://www.thecloudblocks.com/me):'
+	@api_key = gets
+	@api_key = @api_key.chomp
+	if @api_key.length != 32
+		puts 'Invalid API key'
+		exit -1
+	else
+		save_config
+		puts 'Configuration Saved'
+	end
+end
+
+if command.nil? || command.empty?
+	puts 'No command found. Use --help for more information'
+	exit -1
+end
+
+unless commands.include?(command)
+	puts 'Invalid command. Use --help for more information'
+	exit -1
+end
+
+if (@agent_id.nil? || @agent_id.empty?) && command != 'register'
+	puts 'No Agent id found. Use --help for more information'
+	exit -1
+end
+
+@load_path = File.expand_path(File.join(File.dirname(__FILE__), '../lib/plugins'))
+@log.info "Loading plugins from #{@load_path}"
+
+# commands
+@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id)
+
+def start
+	@log.info "Starting CloudQuartz agent"
+
+	# TEMP
+	EM.run {
+		while true do
+			get_job
+			sleep 5
+		end
+	}
+end
+
+def stop
+	@log.info "Stopping CloudQuartz agent"
+end
+
+def restart
+	puts "Restarting"
+	stop
+	start
+end
+
+def register
+	puts "Registering agent with #{@url} and API Key #{@api_key}"
+	os_name = RUBY_PLATFORM
+	os_id = os_name.include?('darwin') ? 5 : 1
+	agent = { :agent_type_id => os_id, :agent_name => Socket.gethostname, :agent_timezone => Time.new.zone, :extra => os_name}
+
+	result = @quartz.register(agent)
+	if result['ok']
+		@agent_id = result['uid']
+		puts "Registered with id #{@agent_id}"
+		save_config
+	else
+		puts "Failed to register due to #{result['error']}"
+		exit -1
+	end
+end
+
+def unregister
+	puts "Unregister agent #{@agent_id} with #{@url}"
+	@quartz.unregister(@agent_id)
+end
+
+private
+
+def load_plugins
+	files = Dir.glob("#{@load_path}/*.rb")
+	files.each do |file|
+		if file != 'quartz_plugin'
+			# is it a valid plugin?
+			@log.debug "Found #{file}"
+			require "#{file}"
+			classname = File.basename(file, '.rb').capitalize
+			begin
+				clazz = Kernel.const_get(classname)
+				if clazz.ancestors[1].name == 'QuartzPlugin'
+					instance = clazz.new(@log, { :api_key => @api_key, :agent_id => @agent_id })
+					guid = instance.guid
+					@plugins = @plugins.merge({ guid => instance })
+					@log.info "Found plugin #{clazz.name} with uid #{guid}"
+				end
+			rescue
+			end
+		end
+	end
+
+	@log.debug "All plugins #{@plugins}"
+end
+
+def get_job
+	result = @quartz.get_job
+	if result['ok']
+		if result['empty']
+			@log.debug 'No jobs to run'
+		else
+			message = JSON.parse(result['message'])
+			guid = message['plugin_uid']
+			name = message['template_name']
+			drt = message['desired_run_time']
+
+			@log.info "Going to run #{name} (uid:#{guid})"
+
+			# TODO: check DRT
+			# get the plugin
+			if @plugins.include?(guid)
+				plugin = @plugins[guid]
+				# run it
+				run_plugin(plugin, message)
+			else
+				@log.error "No plugin found with uid #{guid}"
+				# TODO: Send this back to server as run error
+			end
+		end
+	else
+		@log.error "Failed to retrieve job due to #{result['error']}"
+	end
+end
+
+def save_config
+	if !FileTest::directory?(@config_dir)
+		Dir.mkdir(@config_dir)
+	end
+	File.open(@config_full, 'w+') { |out| YAML::dump({ 'api_key' => @api_key, 'agent_id' => @agent_id }, out) }
+end
+
+def run_plugin(plugin, message)
+	run_start = Time.now.utc.to_i
+	begin
+		job_id = message['job_id']
+		@log.debug "Running #{plugin.guid} with #{message}"
+		result = plugin.run(message)
+		@log.debug "Run returned for job #{job_id} with #{result}"
+		@log.debug result
+		ok = result[:ok]
+		to_return = result[:message]
+	rescue => exc
+		@log.error "Failure during running plugin #{plugin} due to #{exc}"
+		ok = false
+		to_return = result[:message]
+	ensure
+		data = { :run_start => run_start, :run_end => Time.now.utc.to_i, :agent_uid => @agent_id, :ok => ok }
+		data = ok ? data.merge({ :run_result => to_return }) : data.merge({ :fail_reason => to_return })
+		begin
+			@log.debug "Posting results for job #{job_id} back to the server #{data}"
+			@quartz.post_results(job_id, data)
+		rescue => e
+			@log.error "Failed to post results back to server due to #{e}"
+		end
+	end
+end
+
+def check_version
+	result = @quartz.check_version
+	if result['ok']
+		latest = result['latest']
+		@log.warn 'A newer version of CloudQuartz agent is available. Update the cloudblocks gem. See http://help.thecloudblocks.com for more info' if latest > @version
+	end
+end
+
+public
+
+check_version
+load_plugins
+send(command)
+

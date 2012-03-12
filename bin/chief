@@ -6,12 +6,12 @@ require 'optparse'
 require 'eventmachine'
 require 'faye'
 
-config_file = 'chief.yaml'
-config_dir = File.join(Dir.home, '.chief')
+config_file = 'cloudblocks.yaml'
+config_dir = File.join(Dir.home, '.cloudblocks')
 config_full = File.join(config_dir, config_file)
 
 api_key = ''
-faye_url = 'https://socket.thecloudblocks.com:8443/chief'
+faye_url = 'https://socket.thecloudblocks.com:8443/'
 
 if File.exists?(config_full)	
 	# config file present

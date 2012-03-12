@@ -1,9 +1,9 @@
 Gem::Specification.new do |s|
-  s.name        = 'config-chief'
-  s.version     = '0.0.3'
+  s.name        = 'cloudblocks'
+  s.version     = '0.0.1'
   s.date        = '2012-03-08'
-  s.summary     = "CloudBlocks ConfigChief Ruby Gem"
-  s.description = "Simple and easy configuration for ruby/rails apps. See http://www.thecloudblocks.com for more info"
+  s.summary     = "CloudBlocks Gem and Agent"
+  s.description = "See http://www.thecloudblocks.com for more info"
   s.authors     = ["Khash Sajadi"]
   s.email       = 'khash@thecloudblocks.com'
   s.files       = ["lib/config-chief.rb"]
@@ -13,4 +13,5 @@ Gem::Specification.new do |s|
   s.add_dependency('faye', '>=0.8.0')
   s.homepage    = 'http://www.thecloudblocks.com'
   s.executables << 'chief'
+  s.executables << 'quartz'
 end
