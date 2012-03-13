@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 
-this_dir = File.dirname(__FILE__)
 require 'yaml'
 require '../lib/cloud-quartz'
 require 'optparse'
@@ -13,16 +12,19 @@ require 'logger'
 @version = 0
 
 config_file = 'cloudblocks.yaml'
+@pid_file = 'quartz.pid'
+@log_file = 'quartz.log'
 @config_dir = File.join(Dir.home, '.cloudblocks')
 @config_full = File.join(@config_dir, config_file)
+@pid_full = File.join('/tmp', @pid_file)
+@log_full = File.join('/tmp', @log_file)
 
 @api_key = ''
-faye_url = 'https://socket.thecloudblocks.com:8443/'
+@faye_url = 'https://socket.thecloudblocks.com:8443/'
 commands = %w[register unregister start stop]
 
 @plugins = {}
 
-is_test = false
 @url = nil
 @daemon_mode = true
 command = nil
@@ -43,12 +45,24 @@ OptionParser.new do |opts|
 		@daemon_mode = false
 	end
 
-	opts.on('--api-key APIKEY', 'API key') do |apikey|
-		@api_key = apikey
+	opts.on('--pid PID', 'PID file path') do |v|
+		@pid_full = v
 	end
 
-	opts.on('-t', '--test', 'Test mode. Fetches jobs from the server but doesn\'t run them') do |test|
-		is_test = true
+	opts.on('--log LOG', 'Log file path') do |v|
+		@log_full = v
+	end
+
+	opts.on('-c', '--config CONFIG', 'Config file path') do |v|
+		@config_full = v
+	end
+
+	opts.on('--sockets SOCKETS', 'Sockets URL') do |v|
+		@faye_url = v
+	end
+
+	opts.on('--api-key APIKEY', 'API key') do |apikey|
+		@api_key = apikey
 	end
 
 	opts.on_tail("-h", "--help", "Show this message") do
@@ -58,7 +72,6 @@ OptionParser.new do |opts|
 		puts 'unregister: Unregister the agent'
 		puts 'start: Starts agent as deamon'
 		puts 'stop: Stops agent daemon'
-		puts 'restart: Restart agent daemon'
 		exit 0
 	end
 end.parse!
@@ -66,7 +79,7 @@ end.parse!
 command = ARGV[0].downcase unless ARGV[0].nil?
 
 if @daemon_mode
-	@log = Logger.new('./quartz.log')
+	@log = Logger.new(@log_full)
 else
 	@log = Logger.new(STDOUT)
 end
@@ -104,7 +117,7 @@ unless commands.include?(command)
 end
 
 if (@agent_id.nil? || @agent_id.empty?) && command != 'register'
-	puts 'No Agent id found. Use --help for more information'
+	puts 'No Agent id found. Have you registered it yet? Use --help for more information'
 	exit -1
 end
 
@@ -115,10 +128,11 @@ end
 
 def start
 	@log.info "Starting CloudQuartz agent"
+	puts "Starting CloudQuartz agent"
 
 	pid = get_pid
 	if pid != 0
-		warn "Quartz is already running. Use --help for help"
+		warn "Quartz is already running. Use stop command to stop it or --help for more info"
 		exit -1
 	end
 
@@ -132,10 +146,15 @@ def start
 			run
 		}
 
-		file = File.new('./quartz.pid', "w")
-		file.write(pid)
-		file.close
-		Process.detach(pid)
+		begin
+			file = File.new(@pid_full, "w")
+			file.write(pid)
+			file.close
+			Process.detach(pid)
+		rescue => exc
+			Process.kill('TERM', pid)
+			warn "Cannot start CloudQuartz agent: #{exc.message}"
+		end
 	else
 		run
 	end
@@ -150,7 +169,14 @@ def stop
 	rescue
 	end
 
-	Process.kill('TERM', pid.to_i) if pid != 0
+	if pid != 0
+		Process.kill('HUP', pid.to_i)
+		File.delete(@pid_full)
+		puts "Stopped"
+	else
+		warn "Quartz is not running"
+		exit -1
+	end
 end
 
 def register
@@ -172,7 +198,9 @@ end
 
 def unregister
 	puts "Unregister agent #{@agent_id} with #{@url}"
+	@agent_id = ""
 	@quartz.unregister(@agent_id)
+	save_config
 end
 
 private
@@ -279,10 +307,15 @@ def run_plugin(plugin, message)
 end
 
 def check_version
-	result = @quartz.check_version
-	if result['ok']
-		latest = result['latest']
-		@log.warn 'A newer version of CloudQuartz agent is available. Update the cloudblocks gem. See http://help.thecloudblocks.com for more info' if latest > @version
+	begin
+		result = @quartz.check_version
+		if result['ok']
+			latest = result['latest']
+			@log.warn 'A newer version of CloudQuartz agent is available. Update the cloudblocks gem. See http://help.thecloudblocks.com for more info' if latest > @version
+		end
+	rescue => exc
+		warn "Cannot connect to the server"
+		exit -1
 	end
 end
 
@@ -299,8 +332,8 @@ def run
 end
 
 def get_pid
-	if File.exists?('./quartz.pid')
-		file = File.new('./quartz.pid', "r")
+	if File.exists?(@pid_full)
+		file = File.new(@pid_full, "r")
 		pid = file.read
 		file.close
 
@@ -308,9 +341,6 @@ def get_pid
 	else
 		0
 	end
-end
-
-def do_stop
 end
 
 public
