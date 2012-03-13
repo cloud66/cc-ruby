@@ -1,8 +1,10 @@
 #!/usr/bin/env ruby
 
+this_dir = File.dirname(__FILE__)
 require 'yaml'
 require '../lib/cloud-quartz'
 require 'optparse'
+require 'rubygems'
 require 'eventmachine'
 require 'faye'
 require 'socket'
@@ -10,25 +12,23 @@ require 'logger'
 
 @version = 0
 
-@log = Logger.new(STDOUT)
-@log.level = Logger::DEBUG
-
 config_file = 'cloudblocks.yaml'
 @config_dir = File.join(Dir.home, '.cloudblocks')
 @config_full = File.join(@config_dir, config_file)
 
 @api_key = ''
 faye_url = 'https://socket.thecloudblocks.com:8443/'
-commands = %w[start stop register unregister restart]
+commands = %w[register unregister start stop]
 
 @plugins = {}
 
 is_test = false
 @url = nil
+@daemon_mode = true
 command = nil
 @agent_id = nil
 OptionParser.new do |opts|
-	opts.banner = "Usage: quartz [register|unregister|start|stop|restart] [options]"
+	opts.banner = "Usage: quartz [register|unregister|start|stop] [options]"
 
 	opts.on('-u', '--url URL', 'Server URL') do |server_url|
 		@url = server_url
@@ -37,6 +37,10 @@ OptionParser.new do |opts|
 
 	opts.on('--agent-id AGENTID', 'Agent id') do |agent|
 		@agent_id = agent
+	end
+
+	opts.on('--no-daemon', 'Not in daemon mode') do |v|
+		@daemon_mode = false
 	end
 
 	opts.on('--api-key APIKEY', 'API key') do |apikey|
@@ -60,6 +64,14 @@ OptionParser.new do |opts|
 end.parse!
 
 command = ARGV[0].downcase unless ARGV[0].nil?
+
+if @daemon_mode
+	@log = Logger.new('./quartz.log')
+else
+	@log = Logger.new(STDOUT)
+end
+
+@log.level = Logger::DEBUG
 
 if @api_key.empty? && File.exists?(@config_full)
 	# config file present
@@ -97,36 +109,48 @@ if (@agent_id.nil? || @agent_id.empty?) && command != 'register'
 end
 
 @load_path = File.expand_path(File.join(File.dirname(__FILE__), '../lib/plugins'))
-@log.info "Loading plugins from #{@load_path}"
 
 # commands
 @quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id)
 
 def start
 	@log.info "Starting CloudQuartz agent"
+
+	pid = get_pid
+	if pid != 0
+		warn "Quartz is already running. Use --help for help"
+		exit -1
+	end
+
+	check_version
+	load_plugins
+
 	@quartz.status(1, @version, plugin_meta_data)
 
-	# TEMP
-	EM.run {
-		Signal.trap('INT') { stop }
-    	Signal.trap('TERM'){ stop }
-    
-		EM.add_periodic_timer 5 do
-			get_job
-		end
-	}
+	if @daemon_mode
+		pid = fork {
+			run
+		}
+
+		file = File.new('./quartz.pid', "w")
+		file.write(pid)
+		file.close
+		Process.detach(pid)
+	else
+		run
+	end
 end
 
 def stop
+	pid = get_pid
 	@log.info "Stopping CloudQuartz agent"
-	@quartz.status(2, @version, plugin_meta_data)
-	EM.stop
-end
+	begin
+		EM.stop
+		@quartz.status(2, @version, plugin_meta_data)
+	rescue
+	end
 
-def restart
-	puts "Restarting"
-	stop
-	start
+	Process.kill('TERM', pid.to_i) if pid != 0
 end
 
 def register
@@ -154,6 +178,8 @@ end
 private
 
 def load_plugins
+	@log.info "Loading plugins from #{@load_path}"
+
 	files = Dir.glob("#{@load_path}/*.rb")
 	files.each do |file|
 		if file != 'quartz_plugin'
@@ -260,9 +286,33 @@ def check_version
 	end
 end
 
+private 
+
+def run
+	EM.run{
+	 	Signal.trap('INT') { stop }
+	    Signal.trap('TERM'){ stop }
+		EM.add_periodic_timer 5 do
+			get_job
+		end
+	}
+end
+
+def get_pid
+	if File.exists?('./quartz.pid')
+		file = File.new('./quartz.pid', "r")
+		pid = file.read
+		file.close
+
+		pid
+	else
+		0
+	end
+end
+
+def do_stop
+end
+
 public
 
-check_version
-load_plugins
 send(command)
-

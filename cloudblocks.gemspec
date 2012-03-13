@@ -12,6 +12,7 @@ Gem::Specification.new do |s|
   s.add_dependency('eventmachine', '>=0.12.10')
   s.add_dependency('faye', '>=0.8.0')
   s.add_dependency('open4', '>=1.3.0')
+  s.add_dependency('rubygems', '>=1.8.17')
   s.homepage    = 'http://www.thecloudblocks.com'
   s.executables << 'chief'
   s.executables << 'quartz'
