@@ -1,16 +1,8 @@
 require File.join(File.dirname(__FILE__), 'quartz_plugin')
 
 class Tester < QuartzPlugin
-	def guid
-		"c0bb6ed7950b489f9abba8071ff0e0ab"
-	end
-
-	def name
-		"Tester"
-	end
-
-	def version
-		"0.0.0"
+	def info
+		{ :uid => "c0bb6ed7950b489f9abba8071ff0e0ab", :name => "Tester", :version => "0.0.0" }
 	end
 
 	def run(message)

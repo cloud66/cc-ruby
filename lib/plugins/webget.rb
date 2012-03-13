@@ -2,16 +2,8 @@ require File.join(File.dirname(__FILE__), 'quartz_plugin')
 require 'HTTParty'
 
 class Webget < QuartzPlugin
-	def guid
-		"6b5f722d214f4d71a5be237d44094721"
-	end
-
-	def name
-		"WebGet"
-	end
-
-	def version
-		"0.0.0"
+	def info
+		{ :uid => "6b5f722d214f4d71a5be237d44094721", :name => "WebGet", :version => "0.0.0" }
 	end
 
 	def run(message)

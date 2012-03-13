@@ -1,15 +1,25 @@
 #!/usr/bin/env ruby
 
 require 'yaml'
-require '../lib/cloud-quartz'
+require File.expand_path("../../lib/cloud-quartz", __FILE__)
 require 'optparse'
 require 'rubygems'
-require 'eventmachine'
-require 'faye'
 require 'socket'
 require 'logger'
+begin
+	gem 'eventmachine', '~>1.0.0.beta.4'
+	gem 'faye', '~>0.8.0'
 
-@version = 0
+	require 'eventmachine'
+	require 'faye'
+rescue LoadError => exc
+	warn "Cannot find required ruby gems needed to run this agent. Please install cloudblocks gem by running 'gem install cloudblocks'"
+	warn exc
+	exit -1
+end
+
+@version = 1
+str_version = "0.0.#{@version}"
 
 config_file = 'cloudblocks.yaml'
 @pid_file = 'quartz.pid'
@@ -30,9 +40,16 @@ commands = %w[register unregister start stop]
 command = nil
 @agent_id = nil
 OptionParser.new do |opts|
-	opts.banner = "Usage: quartz [register|unregister|start|stop] [options]"
+	opts.banner = 	<<-EOF
+CloudQuartz Agent. v#{str_version} (c) 2012 CloudBlocks
+For more information please visit http://www.thecloudblocks.com
 
-	opts.on('-u', '--url URL', 'Server URL') do |server_url|
+Usage: quartz [register|unregister|start|stop] [options]
+
+Options:
+EOF
+
+	opts.on('--url URL', 'Server URL') do |server_url|
 		@url = server_url
 	end
 	@url = @url || 'https://api.thecloudblocks.com'
@@ -41,15 +58,15 @@ OptionParser.new do |opts|
 		@agent_id = agent
 	end
 
-	opts.on('--no-daemon', 'Not in daemon mode') do |v|
+	opts.on('-d', '--no-daemon', 'Not in daemon mode') do |v|
 		@daemon_mode = false
 	end
 
-	opts.on('--pid PID', 'PID file path') do |v|
+	opts.on('-p', '--pid PID', 'PID file path') do |v|
 		@pid_full = v
 	end
 
-	opts.on('--log LOG', 'Log file path') do |v|
+	opts.on('-l', '--log LOG', 'Log file path') do |v|
 		@log_full = v
 	end
 
@@ -67,11 +84,15 @@ OptionParser.new do |opts|
 
 	opts.on_tail("-h", "--help", "Show this message") do
 		puts opts
-		puts 'Commands:'
-		puts 'register: Register the agent'
-		puts 'unregister: Unregister the agent'
-		puts 'start: Starts agent as deamon'
-		puts 'stop: Stops agent daemon'
+		puts <<-EOF
+
+Commands:
+	register 			Register the agent
+	start 				Starts agent as deamon
+	stop 				Stops agent daemon
+	unregister			Unregister the agent
+
+		EOF
 		exit 0
 	end
 end.parse!
@@ -212,16 +233,15 @@ def load_plugins
 	files.each do |file|
 		if file != 'quartz_plugin'
 			# is it a valid plugin?
-			@log.debug "Found #{file}"
 			require "#{file}"
 			classname = File.basename(file, '.rb').capitalize
 			begin
 				clazz = Kernel.const_get(classname)
 				if clazz.ancestors[1].name == 'QuartzPlugin'
 					instance = clazz.new(@log, { :api_key => @api_key, :agent_id => @agent_id })
-					guid = instance.guid
+					guid = instance.info[:uid]
 					@plugins = @plugins.merge({ guid => instance })
-					@log.info "Found plugin #{instance.name}/#{instance.version} with uid #{guid}"
+					@log.info "Found plugin #{instance.info[:name]}/#{instance.info[:version]} with uid #{guid}"
 				end
 			rescue
 			end
@@ -234,7 +254,7 @@ end
 def plugin_meta_data
 	result = []
 	@plugins.each do |k, v|
-		result << { :name => v.name, :version => v.version, :uid => v.guid }
+		result << v.info
 	end
 
 	result

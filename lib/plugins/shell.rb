@@ -1,16 +1,8 @@
 require File.join(File.dirname(__FILE__), 'quartz_plugin')
 
 class Rake < QuartzPlugin
-	def guid
-		"20e07c656e2f477d969e9561e13229fb"
-	end
-
-	def name
-		"Shell"
-	end
-
-	def version
-		"0.0.0"
+	def info
+		{ :uid => "20e07c656e2f477d969e9561e13229fb", :name => "Shell", :version => "0.0.0" }
 	end
 
 	def run(message)
