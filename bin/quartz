@@ -54,8 +54,8 @@ EOF
 	end
 	@url = @url || 'https://api.thecloudblocks.com'
 
-	opts.on('--agent-id AGENTID', 'Agent id') do |agent|
-		@agent_id = agent
+	opts.on('--agent-id AGENTID', 'Agent id') do |v|
+		@agent_id = v
 	end
 
 	opts.on('-d', '--no-daemon', 'Not in daemon mode') do |v|
@@ -78,8 +78,8 @@ EOF
 		@faye_url = v
 	end
 
-	opts.on('--api-key APIKEY', 'API key') do |apikey|
-		@api_key = apikey
+	opts.on('--api-key APIKEY', 'API key') do |v|
+		@api_key = v
 	end
 
 	opts.on_tail("-h", "--help", "Show this message") do

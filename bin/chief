@@ -1,10 +1,25 @@
 #!/usr/bin/env ruby
 
 require 'yaml'
-require 'config-chief'
+require File.expand_path("../../lib/config-chief", __FILE__)
 require 'optparse'
-require 'eventmachine'
-require 'faye'
+begin
+	gem 'eventmachine', '~>1.0.0.beta.4'
+	gem 'faye', '~>0.8.0'
+
+	require 'eventmachine'
+	require 'faye'
+rescue LoadError => exc
+	warn "Cannot find required ruby gems needed to run this agent. Please install cloudblocks gem by running 'gem install cloudblocks'"
+	warn exc
+	exit -1
+end
+
+def stop
+	puts "Stopping"
+	EM.stop
+	exit 0
+end
 
 config_file = 'cloudblocks.yaml'
 config_dir = File.join(Dir.home, '.cloudblocks')
@@ -35,6 +50,8 @@ else
 	end
 end
 
+@version = 1
+str_version = "0.0.#{@version}"
 workspace = nil
 key = nil
 is_test = false
@@ -42,31 +59,38 @@ parameters = {}
 url = nil
 id = nil
 OptionParser.new do |opts|
-	opts.banner = "Usage: chief [options]"
+	opts.banner = 	<<-EOF
+ConfigChief. v#{str_version} (c) 2012 CloudBlocks
+For more information please visit http://www.thecloudblocks.com
 
-	opts.on("-w", "--workspace WORKSPACE", "Workspace id") do |workspace_id|
-		workspace = workspace_id
+Usage: chief [options]
+
+Options:
+EOF
+
+	opts.on("-w", "--workspace WORKSPACE", "Workspace id") do |v|
+		workspace = v
 	end
 
-	opts.on('-u', '--url URL', 'Server URL') do |server_url|
-		url = server_url
+	opts.on('-u', '--url URL', 'Server URL') do |v|
+		url = v
 	end
 	url = url || 'https://api.thecloudblocks.com'
 
-	opts.on('-k', '--key KEY', 'Config Key') do |key_id|
-		key = key_id
+	opts.on('-k', '--key KEY', 'Config Key') do |v|
+		key = v
 	end
 
-	opts.on('--api-key APIKEY', 'API key') do |apikey|
-		api_key = apikey
+	opts.on('--api-key APIKEY', 'API key') do |v|
+		api_key = v
 	end
 
-	opts.on('-i', '--id ID', 'Config Id') do |config_id|
-		id = config_id
+	opts.on('-i', '--id ID', 'Config Id') do |v|
+		id = v
 	end
 
-	opts.on('-p', '--parameters P1=V1,P2=V2,...', Array, 'Optional Parameters') do |params|
-		params.each do |p|
+	opts.on('-p', '--parameters P1=V1,P2=V2,...', Array, 'Optional Parameters') do |v|
+		v.each do |p|
 			pv = p.split('=')
 			if pv.count != 2 || pv[0].nil? || pv[1].nil?
 				warn 'Invalid Parameters. Use -h for help'
@@ -77,7 +101,7 @@ OptionParser.new do |opts|
 		end
 	end
 
-	opts.on('-t', '--test', 'Test mode. Shows updates received from the server') do |test|
+	opts.on('-t', '--test', 'Test mode. Shows updates received from the server') do |v|
 		is_test = true
 	end
 
@@ -88,7 +112,7 @@ OptionParser.new do |opts|
 end.parse!
 
 if workspace.nil?
-	warn 'No workspace specified. Use -h for help.'
+	warn 'No workspace specified. Use --help for more info'
 	exit -1 
 end
 
@@ -99,6 +123,9 @@ end
 
 if is_test
 	EM.run {
+	 	Signal.trap('INT') { stop }
+	    Signal.trap('TERM'){ stop }
+
 		puts "Listening for #{workspace}/keys now on #{faye_url}"
 		client = Faye::Client.new(faye_url)
 		client.subscribe("/#{workspace}/keys") do |message|
@@ -114,5 +141,3 @@ else
 		puts chief.get_by_key(key, {}, parameters)
 	end
 end
-
-
