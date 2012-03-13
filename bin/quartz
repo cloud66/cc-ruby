@@ -185,8 +185,8 @@ def stop
 	pid = get_pid
 	@log.info "Stopping CloudQuartz agent"
 	begin
-		EM.stop
 		@quartz.status(2, @version, plugin_meta_data)
+		EM.stop
 	rescue
 	end
 
