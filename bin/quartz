@@ -39,6 +39,7 @@ commands = %w[register unregister start stop]
 @daemon_mode = true
 command = nil
 @agent_id = nil
+@realtime = true
 OptionParser.new do |opts|
 	opts.banner = 	<<-EOF
 CloudQuartz Agent. v#{str_version} (c) 2012 CloudBlocks
@@ -80,6 +81,10 @@ EOF
 
 	opts.on('--api-key APIKEY', 'API key') do |v|
 		@api_key = v
+	end
+
+	opts.on('-n', '--no-realtime', 'Disable realtime notifications') do |v|
+		@realtime = false
 	end
 
 	opts.on_tail("-h", "--help", "Show this message") do
@@ -273,7 +278,6 @@ def get_job
 
 			@log.info "Going to run #{name} (uid:#{guid})"
 
-			# TODO: check DRT
 			# get the plugin
 			if @plugins.include?(guid)
 				plugin = @plugins[guid]
@@ -300,7 +304,7 @@ def run_plugin(plugin, message)
 	run_start = Time.now.utc.to_i
 	begin
 		job_id = message['job_id']
-		@log.debug "Running #{plugin.guid} with #{message}"
+		@log.debug "Running #{plugin.info[:guid]} with #{message}"
 		result = plugin.run(message)
 		@log.debug "Run returned for job #{job_id} with #{result}"
 		@log.debug result
@@ -345,8 +349,19 @@ def run
 	EM.run{
 	 	Signal.trap('INT') { stop }
 	    Signal.trap('TERM'){ stop }
-		EM.add_periodic_timer 5 do
-			get_job
+
+	    if @realtime
+	    	@log.info "Listening to realtime nofitifications from /quartz/jobs/#{@agent_id} on #{@faye_url}" 
+	    	client = Faye::Client.new(@faye_url)
+			client.subscribe("/quartz/jobs/#{@agent_id}") do |message|
+    			@log.info "Got realtime notice for a new job #{message}"
+    			get_job
+			end
+	    else
+	    	@log.info "Checking for new jobs every 5 seconds"
+			EM.add_periodic_timer 5 do
+				get_job
+			end
 		end
 	}
 end

@@ -126,9 +126,9 @@ if is_test
 	 	Signal.trap('INT') { stop }
 	    Signal.trap('TERM'){ stop }
 
-		puts "Listening for #{workspace}/keys now on #{faye_url}"
+		puts "Listening for /chief/keys/#{workspace} now on #{faye_url}"
 		client = Faye::Client.new(faye_url)
-		client.subscribe("/#{workspace}/keys") do |message|
+		client.subscribe("/chief/keys/#{workspace}") do |message|
     		puts message.inspect
 		end
 	}
