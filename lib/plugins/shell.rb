@@ -13,7 +13,8 @@ class Rake < QuartzPlugin
 		@log.info "Shell command '#{command}' with '#{params}'"
 
 		begin
-			return run_shell(command, params)
+			result = run_shell("#{command} #{params}")
+			run_result(result[:ok], result[:message])
 		rescue => ex
 			run_result(false, "Failed to run shell command due to #{ex}")
 		end

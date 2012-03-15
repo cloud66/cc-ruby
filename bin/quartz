@@ -161,19 +161,24 @@ end
 @quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id)
 
 def start
-	@log.info "Starting CloudQuartz agent"
-	puts "Starting CloudQuartz agent"
+	begin
+		@log.info "Starting CloudQuartz agent"
+		puts "Starting CloudQuartz agent"
 
-	pid = get_pid
-	if pid != 0
-		warn "Quartz is already running. Use stop command to stop it or --help for more info"
+		pid = get_pid
+		if pid != 0
+			warn "Quartz is already running. Use stop command to stop it or --help for more info"
+			exit -1
+		end
+
+		check_version
+		load_plugins
+
+		@log.info @quartz.status(1, @version, plugin_meta_data)
+	rescue => exc
+		@log.error exc.message
 		exit -1
 	end
-
-	check_version
-	load_plugins
-
-	@quartz.status(1, @version, plugin_meta_data)
 
 	if @daemon_mode
 		pid = fork {

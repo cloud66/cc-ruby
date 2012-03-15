@@ -1,0 +1,6 @@
+db_name : confgr
+username : root
+password :  
+backup_folder : /tmp/backup-tests
+dump_utility: /usr/local/mysql/bin/mysqldump
+additional_options: ['--single-transaction', '--quick']
