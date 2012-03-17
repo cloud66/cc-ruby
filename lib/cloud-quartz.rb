@@ -21,7 +21,7 @@ class CloudQuartz
 	end
 
 	def unregister(agent)
-		process(self.class.delete("/agent/#{agent}", :headers => http_headers))
+		process(self.class.delete("/agent/#{@agent_id}.json", :headers => http_headers))
 	end
 
 	def check_version
