@@ -3,7 +3,6 @@
 require 'yaml'
 require File.expand_path("../../lib/cloud-quartz", __FILE__)
 require 'optparse'
-require 'rubygems'
 require 'socket'
 require 'logger'
 begin
@@ -171,7 +170,8 @@ def get_job
 			if @plugins.include?(guid)
 				plugin = @plugins[guid]
 				# run it
-				fork { run_plugin(plugin, message) }
+				operation = proc { run_plugin(plugin, message) }
+				EM.defer(operation)
 			else
 				@log.error "No plugin found with uid #{guid}"
 				# TODO: Send this back to server as run error

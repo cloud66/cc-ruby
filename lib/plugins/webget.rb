@@ -1,5 +1,5 @@
 require File.join(File.dirname(__FILE__), 'quartz_plugin')
-require 'HTTParty'
+require 'httparty'
 
 class Webget < QuartzPlugin
 	def info
