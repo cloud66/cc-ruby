@@ -2,8 +2,8 @@ require 'rake'
 
 Gem::Specification.new do |s|
   s.name        = 'cloudblocks'
-  s.version     = '0.0.5d'
-  s.date        = '2012-03-15'
+  s.version     = '0.0.6'
+  s.date        = '2012-03-16'
   s.summary     = "CloudBlocks Gem and Agent"
   s.description = "See http://www.thecloudblocks.com for more info"
   s.authors     = ["Khash Sajadi"]
