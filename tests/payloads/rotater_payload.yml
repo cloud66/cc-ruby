@@ -1,0 +1,4 @@
+source_pattern : /tmp/backups/*
+destination_location : /tmp/rotated
+keep : 4
+post_rotate : touch /tmp/abc.txt
