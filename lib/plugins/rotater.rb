@@ -38,16 +38,16 @@ class Rotater < QuartzPlugin
         	if all_rotated.count > keep
         		remove_count = all_rotated.count - keep
 	        	to_remote = all_rotated.sort! { |a,b| File.mtime(a) <=> File.mtime(b) }[0...remove_count]
-				@log.debug "Removing extra files"
-				to_remote.each do |tr|
-					@log.debug "Removing #{tr}"
-					remove_shell = run_shell("rm #{tr}")
-					return run_result(false, remove_shell[:message]) unless remove_shell[:ok]
-				end
+			@log.debug "Removing extra files"
+			to_remote.each do |tr|
+				@log.debug "Removing #{tr}"
+				remove_shell = run_shell("rm #{tr}")
+				return run_result(false, remove_shell[:message]) unless remove_shell[:ok]
+			end
 	        end
         end
 
-        if post_rotate && rotated
+        if !post_rotate.empty? && rotated
         	@log.debug "Running post rotate step #{post_rotate}"
         	post_shell = run_shell(post_rotate)
         	return run_result(false, post_shell[:message]) unless post_shell[:ok]
