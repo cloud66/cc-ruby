@@ -12,7 +12,7 @@ class Logrotate < QuartzPlugin
 
 		@source_pattern 	= pl['source pattern']
 		@dest_folder 		= pl['destination']
-		@keep 				= pl['keep'].nil? ? 0 : pl['keep'].to_i
+		@keep 				= pl['keep'].empty? ? 0 : pl['keep'].to_i
 		@post_run_step 		= pl['post rotate']
 
         ext = Time.now.utc.strftime('%Y%m%d%H%M%S')
@@ -21,6 +21,7 @@ class Logrotate < QuartzPlugin
 
 		Dir.glob(@source_pattern).each do |f|
 			dest_file = File.join(@dest_folder, File.basename(f))
+			next if File.directory?(f)
 			fname = "#{dest_file}.gz"
 			dump_cmd = "cat #{f} | gzip > '#{fname}.#{ext}'"
 	        @log.debug "Running #{dump_cmd}"

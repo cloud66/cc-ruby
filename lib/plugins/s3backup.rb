@@ -19,7 +19,7 @@ class S3backup < QuartzPlugin
 		@remote_path 			= pl['remote path']
 		@region 				= pl['region']
 		@local_pattern 			= pl['local pattern']
-		@keep 					= pl['keep'].nil? ? pl['keep'].to_i : 0
+		@keep 					= pl['keep'].empty? ? 0 : pl['keep'].to_i
 
 		@testing				= pl['testing']
 
@@ -54,6 +54,7 @@ class S3backup < QuartzPlugin
 			# get local files
 			Dir.glob(@local_pattern).each do |f|
 				remote_file = File.join(@remote_path, File.basename(f))
+				next if File.directory?(f)
 				@log.debug "Copying #{f} to #{remote_file}"
 				count += 1
 				File.open(f, 'r') do |file|
@@ -61,7 +62,7 @@ class S3backup < QuartzPlugin
 				end
 			end
 
-			run_result(true, "Files copied to S3 bucket successfully with no rotation") if keep == 0
+			return run_result(true, "Files copied to S3 bucket successfully with no rotation") if @keep == 0
 
 			directory = connection.directories.get(@bucket)
 			all_rotated = directory.files.reject { |m| File.dirname(m.key) != @remote_path }
@@ -76,6 +77,9 @@ class S3backup < QuartzPlugin
 					connection.delete_object(@bucket, tr)
 				end
 			end
+		rescue Excon::Errors::SocketError => exc
+			@log.error exc.message
+			return run_result(false, exc.message)
 		rescue Excon::Errors::Error => exc
 			@log.error exc.message
 			result = exc.response.body
