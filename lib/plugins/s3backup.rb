@@ -19,7 +19,7 @@ class S3backup < QuartzPlugin
 		@remote_path 			= pl['remote path']
 		@region 				= pl['region']
 		@local_pattern 			= pl['local pattern']
-		@keep 					= pl['keep'].to_i
+		@keep 					= pl['keep'].nil? ? pl['keep'].to_i : 0
 
 		@testing				= pl['testing']
 
@@ -60,6 +60,8 @@ class S3backup < QuartzPlugin
 					connection.put_object(@bucket, File.join(remote_path, File.basename(f)), file)
 				end
 			end
+
+			run_result(true, "Files copied to S3 bucket successfully with no rotation") if keep == 0
 
 			directory = connection.directories.get(@bucket)
 			all_rotated = directory.files.reject { |m| File.dirname(m.key) != @remote_path }

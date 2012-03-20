@@ -31,6 +31,8 @@ class Rotater < QuartzPlugin
         	move_shell = run_shell("mv #{f} #{dest_path}")
         	return run_result(false, move_shell[:message]) unless move_shell[:ok]
 
+                return run_result(true, "Files moved successfully with no rotation") if keep == 0
+
         	# find all the files from this one's rotations
         	rotated_pattern = "#{File.join(archive, fname)}.*"
         	@log.debug "Looking for rotated files #{rotated_pattern}"

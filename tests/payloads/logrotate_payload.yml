@@ -1,0 +1,4 @@
+source_pattern : /Users/khashsajadi/work/CloudBlocks/Quartz/server/log/*
+destination : /tmp/backups/logs
+keep : 5
+post_rotate : 
