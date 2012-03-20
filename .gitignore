@@ -1,1 +1,2 @@
 *.gem
+tests/payloads/s3backup_payload.yml
