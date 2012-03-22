@@ -51,7 +51,7 @@ class Logrotate < QuartzPlugin
         end
 
         if !@post_run_step.nil? && !@post_run_step.empty?
-        	@log.debug "Running post rotate step #{post_run_step}"
+        	@log.debug "Running post rotate step #{@post_run_step}"
         	post_shell = run_shell(@post_run_step)
         	return run_result(false, post_shell[:message]) unless post_shell[:ok]
         end

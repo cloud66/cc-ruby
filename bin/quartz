@@ -175,6 +175,7 @@ def get_job
 			else
 				@log.error "No plugin found with uid #{guid}"
 				# TODO: Send this back to server as run error
+				#@quartz.post_results(job_id, data)
 			end
 		end
 	else
