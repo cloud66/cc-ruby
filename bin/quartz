@@ -135,8 +135,11 @@ def load_plugins
 					guid = instance.info[:uid]
 					@plugins = @plugins.merge({ guid => instance })
 					@log.info "Found plugin #{instance.info[:name]}/#{instance.info[:version]} with uid #{guid}"
+				else
+					@log.error "Invalid plugin found #{clazz}"
 				end
-			rescue
+			rescue => exc
+				@log.error "Error during loading plugin #{classname} due to #{exc}"
 			end
 		end
 	end
