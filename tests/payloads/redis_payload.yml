@@ -1,0 +1,4 @@
+db_name : dump
+redis_client: /usr/local/bin/redis-cli
+backup_folder: /tmp/backups/redis
+db_path: /Users/khashsajadi/work/tests/redis-2.2.11

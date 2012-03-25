@@ -138,8 +138,7 @@ def load_plugins
 				else
 					@log.error "Invalid plugin found #{clazz}"
 				end
-			rescue => exc
-				@log.error "Error during loading plugin #{classname} due to #{exc}"
+			rescue 
 			end
 		end
 	end
