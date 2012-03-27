@@ -176,8 +176,9 @@ def get_job
 				EM.defer(operation)
 			else
 				@log.error "No plugin found with uid #{guid}"
-				# TODO: Send this back to server as run error
-				#@quartz.post_results(job_id, data)
+				job_id = message['job_id']
+				data = { :run_start => Time.now.utc.to_i, :run_end => Time.now.utc.to_i, :agent_uid => @agent_id, :ok => false, :fail_reason => "Requested plugin not found. Does this agent support this job type?" }
+				@quartz.post_results(job_id, data)
 			end
 		end
 	else
