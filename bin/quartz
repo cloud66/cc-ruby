@@ -234,9 +234,9 @@ def run
 	    Signal.trap('TERM'){ stop }
 
 	    if @realtime
-	    	@log.info "Listening to realtime nofitifications from /quartz/jobs/#{@agent_id} on #{@faye_url}" 
+	    	@log.info "Listening to realtime nofitifications from /quartz/agents/#{@agent_id} on #{@faye_url}" 
 	    	client = Faye::Client.new(@faye_url)
-			client.subscribe("/quartz/jobs/#{@agent_id}") do |message|
+			client.subscribe("/quartz/agents/#{@agent_id}") do |message|
     			@log.info "Got realtime notice for a new job #{message}"
     			get_job
 			end
@@ -275,7 +275,7 @@ config_file = 'cloudblocks.yaml'
 @log_full = File.join('/tmp', @log_file)
 
 @api_key = ''
-@faye_url = 'https://socket.thecloudblocks.com:8443/'
+@faye_url = 'https://socket.thecloudblocks.com:8443/push/'
 commands = %w[register unregister start stop]
 
 @plugins = {}
