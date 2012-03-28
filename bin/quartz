@@ -5,9 +5,11 @@ require File.expand_path("../../lib/cloud-quartz", __FILE__)
 require 'optparse'
 require 'socket'
 require 'logger'
+require 'highline/import'
 begin
 	gem 'eventmachine', '~>1.0.0.beta.4'
 	gem 'faye', '~>0.8.0'
+	gem 'highline', '~>1.6.11'
 
 	require 'eventmachine'
 	require 'faye'
@@ -368,8 +370,7 @@ end
 # still no api key, we need to get it
 if @api_key.empty?
 	puts 'CloudBlocks CloudQuartz'
-	print 'Please enter your API key. (you can find it at https://www.thecloudblocks.com/me):'
-	@api_key = gets.chomp
+	@api_key = ask('Please enter your API key. (you can find it at https://www.thecloudblocks.com/me): ')
 	if @api_key.length != 32
 		puts 'Invalid API key'
 		exit -1
@@ -381,13 +382,13 @@ end
 
 # no agent id?
 if @agent_id.empty?
-	print 'Register the agent? [Y/n]'
-	if gets.chomp.downcase != 'n'
+	q = ask("Register the agent? ") { |q| q.default = "Y" }
+	if q.chomp.downcase != 'n'
 		@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url)
 		register 
 
-		print 'Start the agent as daemon? [Yn]'
-		if gets.chomp.downcase != 'n'
+		q = ask("Start the agent as daemon? ") { |q| q.default = "Y" }
+		if q.chomp.downcase != 'n'
 			@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id)
 			start
 		else
