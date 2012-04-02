@@ -52,20 +52,25 @@ class S3backup < QuartzPlugin
 
 			count = 0
 			# get local files
+			directory = connection.directories.get(@bucket)
+			all_rotated = directory.files.reject { |m| File.dirname(m.key) != @remote_path }
+
 			Dir.glob(@local_pattern).each do |f|
-				remote_file = File.join(@remote_path, File.basename(f))
-				next if File.directory?(f)
-				@log.debug "Copying #{f} to #{remote_file}"
-				count += 1
-				File.open(f, 'r') do |file|
-					connection.put_object(@bucket, File.join(remote_path, File.basename(f)), file)
+				base_file = File.basename(f)
+				remote_files = all_rotated.map {|m| File.basename(m.key)}
+				unless remote_files.include? base_file
+					remote_file = File.join(@remote_path, base_file)
+					next if File.directory?(f)
+					@log.debug "Copying #{f} to #{remote_file}"
+					count += 1
+					File.open(f, 'r') do |file|
+						connection.put_object(@bucket, File.join(remote_path, base_file), file)
+					end
 				end
 			end
 
 			return run_result(true, "Files copied to S3 bucket successfully with no rotation") if @keep == 0
 
-			directory = connection.directories.get(@bucket)
-			all_rotated = directory.files.reject { |m| File.dirname(m.key) != @remote_path }
 			@log.debug "Found #{all_rotated.count} in the remote bucket"
 			if all_rotated.count > @keep
 				remove_count = all_rotated.count - @keep
