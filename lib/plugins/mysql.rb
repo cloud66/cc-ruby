@@ -14,17 +14,20 @@ class Mysql < QuartzPlugin
 		@log.debug "Pruned payload #{pl}"
 
 		@job_name 			= pl['job_name'].gsub(/[^\w\s_-]+/, '').gsub(/(^|\b\s)\s+($|\s?\b)/, '\\1\\2').gsub(/\s/, '_')
-		@mysqldump_utility 	= pl['dump utility'] || '/usr/bin/mysqldump'
-		@name 				= pl['db name'] || :all
+		@mysqldump_utility 	= pl['dump_utility'] || '/usr/bin/mysqldump'
+		@name 				= pl['db_name'] || :all
 		@username 			= pl['username']
 		@password 			= pl['password']
 		@socket 			= pl['socket']
 		@host 				= pl['host']
 		@port 				= pl['port']
-		@skip_tables 		= pl['skip tables']
-		@only_tables 		= pl['only tables']
-		@additional_options = pl['additional options'] || ['--single-transaction', '--quick']
-		@path 				= pl['backup folder']
+		@skip_tables 		= pl['skip_tables']
+		@only_tables 		= pl['only_tables']
+		@additional_options = pl['additional_options'] || ['--single-transaction', '--quick']
+		@path 				= pl['backup_folder']
+
+		@only_tables = @only_tables.split(',') unless @only_tables.nil?
+		@skip_tables = @skip_tables.split(',') unless @skip_tables.nil?
 
         dump_cmd = "#{mysqldump} | gzip > '#{ File.join(@path, @job_name.downcase) }.sql.gz'"
         @log.debug "Running #{dump_cmd}"

@@ -10,10 +10,10 @@ class Logrotate < QuartzPlugin
 	def run(message)
 		pl = payload(message)
 
-		@source_pattern 	= pl['source pattern']
+		@source_pattern 	= pl['source_pattern']
 		@dest_folder 		= pl['destination']
 		@keep 				= pl['keep'].empty? ? 0 : pl['keep'].to_i
-		@post_run_step 		= pl['post rotate']
+		@post_run_step 		= pl['post_rotate']
 
         ext = Time.now.utc.strftime('%Y%m%d%H%M%S')
 

@@ -22,13 +22,7 @@ class QuartzPlugin
 		parsed_payload = JSON.parse(raw_payload) unless raw_payload.nil?
 		@log.debug "Parsed payload #{parsed_payload}"
 
-		v = {}
-		unless parsed_payload.nil?
-			parsed_payload.each do |p|
-				v = v.merge({ p['name'] => p['value']})
-			end
-		end
-
+		v = parsed_payload
 		v = v.merge({'job_name' => message['job_name']})
 
 		@log.debug "Payload #{v}"

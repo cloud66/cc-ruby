@@ -158,33 +158,37 @@ def plugin_meta_data
 end
 
 def get_job
-	result = @quartz.get_job
-	if result['ok']
-		if result['empty']
-			@log.debug 'No jobs to run'
-		else
-			message = JSON.parse(result['message'])
-			guid = message['plugin_uid']
-			name = message['template_name']
-			drt = message['desired_run_time']
-
-			@log.info "Going to run #{name} (uid:#{guid})"
-
-			# get the plugin
-			if @plugins.include?(guid)
-				plugin = @plugins[guid]
-				# run it
-				operation = proc { run_plugin(plugin, message) }
-				EM.defer(operation)
+	begin
+		result = @quartz.get_job
+		if result['ok']
+			if result['empty']
+				@log.debug 'No jobs to run'
 			else
-				@log.error "No plugin found with uid #{guid}"
-				job_id = message['job_id']
-				data = { :run_start => Time.now.utc.to_i, :run_end => Time.now.utc.to_i, :agent_uid => @agent_id, :ok => false, :fail_reason => "Requested plugin not found. Does this agent support this job type?" }
-				@quartz.post_results(job_id, data)
+				message = JSON.parse(result['message'])
+				guid = message['plugin_uid']
+				name = message['template_name']
+				drt = message['desired_run_time']
+
+				@log.info "Going to run #{name} (uid:#{guid})"
+
+				# get the plugin
+				if @plugins.include?(guid)
+					plugin = @plugins[guid]
+					# run it
+					operation = proc { run_plugin(plugin, message) }
+					EM.defer(operation)
+				else
+					@log.error "No plugin found with uid #{guid}"
+					job_id = message['job_id']
+					data = { :run_start => Time.now.utc.to_i, :run_end => Time.now.utc.to_i, :agent_uid => @agent_id, :ok => false, :fail_reason => "Requested plugin not found. Does this agent support this job type?" }
+					@quartz.post_results(job_id, data)
+				end
 			end
+		else
+			@log.error "Failed to retrieve job due to #{result['error']}"
 		end
-	else
-		@log.error "Failed to retrieve job due to #{result['error']}"
+	rescue => exc
+		@log.error "Failed to retrieve job due to #{exc}"
 	end
 end
 

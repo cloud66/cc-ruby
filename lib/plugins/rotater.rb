@@ -10,10 +10,10 @@ class Rotater < QuartzPlugin
 	def run(message)
 		pl = payload(message)
 
-		source_pattern = pl['source pattern']
+		source_pattern = pl['source_pattern']
 		dest_folder = pl['location']
 		keep = pl['keep'].nil? ? 5 : pl['keep'].to_i
-		post_rotate = pl['post rotate']
+		post_rotate = pl['post_rotate']
 
 		archive = File.join(dest_folder, '/archive')
 

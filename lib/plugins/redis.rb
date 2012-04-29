@@ -11,15 +11,15 @@ class Redis < QuartzPlugin
 		pl = payload(message)
 
 		@job_name 			= pl['job_name'].gsub(/[^\w\s_-]+/, '').gsub(/(^|\b\s)\s+($|\s?\b)/, '\\1\\2').gsub(/\s/, '_')
-		@redisdump_utility 	= pl['redis client'] || '/usr/bin/redis-cli'
-		@name 				= pl['db name'] || 'dump'
+		@redisdump_utility 	= pl['redis_client'] || '/usr/bin/redis-cli'
+		@name 				= pl['db_name'] || 'dump'
 		@password 			= pl['password']
 		@socket 			= pl['socket']
 		@host 				= pl['host'] || '127.0.0.1'
 		@port 				= pl['port'] || 6379
-		@additional_options = pl['additional options'] || []
-		@path 				= pl['db path']
-		@dump_path			= pl['backup folder']
+		@additional_options = pl['additional_options'] || []
+		@path 				= pl['db_path']
+		@dump_path			= pl['backup_folder']
 
 		@name = 'dump' if @name.empty?
 		@host = '127.0.0.1' if @host.empty?

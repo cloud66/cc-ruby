@@ -13,12 +13,12 @@ class S3backup < QuartzPlugin
 
 		@log.debug "Pruned payload #{pl}"
 
-		@access_key_id 			= pl['access key']
-		@secret_access_key 		= pl['secret key']
+		@access_key_id 			= pl['access_key']
+		@secret_access_key 		= pl['secret_key']
 		@bucket 				= pl['bucket']
-		@remote_path 			= pl['remote path']
+		@remote_path 			= pl['remote_path']
 		@region 				= pl['region']
-		@local_pattern 			= pl['local pattern']
+		@local_pattern 			= pl['local_pattern']
 		@keep 					= pl['keep'].empty? ? 0 : pl['keep'].to_i
 
 		@testing				= pl['testing']
