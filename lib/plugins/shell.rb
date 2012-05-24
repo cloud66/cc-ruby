@@ -9,11 +9,10 @@ class Shell < QuartzPlugin
 		@log.debug "Running with #{message}"
 		payload = payload(message)
 		command = payload['command']
-		params = payload['params']
-		@log.info "Shell command '#{command}' with '#{params}'"
+		@log.info "Shell command '#{command}"
 
 		begin
-			result = run_shell("#{command} #{params}")
+			result = run_shell("#{command}")
 			run_result(result[:ok], result[:message])
 		rescue => ex
 			run_result(false, "Failed to run shell command due to #{ex}")
