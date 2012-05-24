@@ -239,6 +239,16 @@ def run
 	 	Signal.trap('INT') { stop }
 	    Signal.trap('TERM'){ stop }
 
+	    # pulse
+		EM.add_periodic_timer 60 do  # 1 minute
+			@log.debug "Pulseate"
+			begin
+				@quartz.pulse 
+			rescue => exc
+				@log.error "Failed to pulsate due to #{exc.message}"
+			end
+		end
+
 	    if @realtime
 	    	@log.info "Listening to realtime nofitifications from /quartz/agents/#{@agent_id} on #{@faye_url}" 
 	    	client = Faye::Client.new(@faye_url)
