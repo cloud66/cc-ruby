@@ -9,6 +9,7 @@ class CloudQuartz
 	def initialize(options = {})
 		@api_key = options[:api_key]
 		@agent_id = options[:agent_id]
+		@secret_key = options[:secret_key]
 		self.class.base_uri options[:url] || 'https://api.thecloudblocks.com'
 	end
 
@@ -44,7 +45,15 @@ class CloudQuartz
 	private
 
 	def http_headers
-		{ 'api_key' => @api_key }
+		time = Time.now.utc.to_i
+		{ 'api_key' => @api_key, 'hash' => signature(time), 'time' => time.to_s }
+	end
+
+	def signature(time)
+		puts "raw #{@api_key}:#{@secret_key}:#{time}"
+		a = Digest::SHA1.hexdigest("#{@api_key}#{@secret_key}#{time}")
+		puts a
+		a
 	end
 
 	def process(response)
