@@ -50,10 +50,7 @@ class CloudQuartz
 	end
 
 	def signature(time)
-		puts "raw #{@api_key}:#{@secret_key}:#{time}"
-		a = Digest::SHA1.hexdigest("#{@api_key}#{@secret_key}#{time}")
-		puts a
-		a
+		Digest::SHA1.hexdigest("#{@api_key}#{@secret_key}#{time}")
 	end
 
 	def process(response)
