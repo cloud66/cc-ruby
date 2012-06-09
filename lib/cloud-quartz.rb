@@ -50,7 +50,7 @@ class CloudQuartz
 	end
 
 	def signature(time)
-		Digest::SHA1.hexdigest("#{@api_key}#{@secret_key}#{time}")
+		Digest::SHA1.hexdigest("#{@api_key}#{@secret_key}#{time}").downcase
 	end
 
 	def process(response)
