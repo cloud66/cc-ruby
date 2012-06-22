@@ -5,9 +5,9 @@ Gem::Specification.new do |s|
   s.version     = '0.0.11'
   s.date        = '2012-04-01'
   s.summary     = "CloudBlocks Gem and Agent"
-  s.description = "See http://www.thecloudblocks.com for more info"
-  s.authors     = ["Khash Sajadi"]
-  s.email       = 'khash@thecloudblocks.com'
+  s.description = "See http://cloudblocks.co for more info"
+  s.authors     = ["CloudBlocks"]
+  s.email       = 'hello@thecloudblocks.com'
   s.files       = FileList["lib/config-chief.rb", "lib/cloud-quartz.rb", 'lib/plugins/**/*.rb'].to_a
   s.add_dependency('httparty', '>= 0.8.1')
   s.add_dependency('json', '>= 1.6.3')
@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.add_dependency('open4', '>=1.3.0')
   s.add_dependency('fog', '>=1.1.2')
   s.add_runtime_dependency('highline', '~>1.6.11')
-  s.homepage    = 'http://www.thecloudblocks.com'
+  s.homepage    = 'http://www.cloudblocks.co'
   s.executables << 'chief'
   s.executables << 'quartz'
 end

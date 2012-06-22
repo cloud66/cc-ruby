@@ -11,7 +11,7 @@ class ConfigChief
   def initialize(options = {})
     @api_key = options[:api_key]
     @workspace = options[:workspace]
-    self.class.base_uri options[:url] || 'https://api.thecloudblocks.com'
+    self.class.base_uri options[:url] || 'https://api.cloudblocks.co'
   end
   
   def get_by_key(key, options = {}, params = {})

@@ -226,7 +226,7 @@ def check_version
 		result = @quartz.check_version
 		if result['ok']
 			latest = result['latest']
-			@log.warn 'A newer version of CloudQuartz agent is available. Update the cloudblocks gem. See http://help.thecloudblocks.com for more info' if latest > @version
+			@log.warn 'A newer version of CloudQuartz agent is available. Update the cloudblocks gem. See http://help.cloudblocks.co for more info' if latest > @version
 		end
 	rescue => exc
 		warn "Cannot connect to the server"
@@ -291,7 +291,7 @@ config_file = 'cloudblocks.yaml'
 @log_full = File.join('/tmp', @log_file)
 
 @api_key = ''
-@faye_url = 'https://socket.thecloudblocks.com:8443/push/'
+@faye_url = 'https://sockets.cloudblocks.co/push/'
 commands = %w[register unregister start stop]
 
 @plugins = {}
@@ -304,7 +304,7 @@ command = nil
 OptionParser.new do |opts|
 	opts.banner = 	<<-EOF
 CloudQuartz Agent. v#{str_version} (c) 2012 CloudBlocks
-For more information please visit http://www.thecloudblocks.com
+For more information please visit http://www.cloudblocks.co
 
 Usage: quartz [register|unregister|start|stop] [options]
 
@@ -314,7 +314,7 @@ EOF
 	opts.on('--url URL', 'Server URL') do |server_url|
 		@url = server_url
 	end
-	@url = @url || 'https://api.thecloudblocks.com'
+	@url = @url || 'https://api.cloudblocks.co'
 
 	opts.on('--agent-id AGENTID', 'Agent id') do |v|
 		@agent_id = v
@@ -389,13 +389,13 @@ end
 # still no api key, we need to get it
 if @api_key.empty?
 	puts 'CloudBlocks CloudQuartz'
-	@api_key = ask('Please enter your API key. (you can find it at https://www.thecloudblocks.com/me): ')
+	@api_key = ask('Please enter your API key. (you can find it at https://www.cloudblocks.co/me): ')
 	if @api_key.length != 32
 		puts 'Invalid API key'
 		exit -1
 	end
 
-	@secret_key = ask('Please enter your Secret Key (you can find it at https://www.thecloudblocks.com/me): ')
+	@secret_key = ask('Please enter your Secret Key (you can find it at https://www.cloudblocks.co/me): ')
 	if @secret_key.length != 32
 		puts 'Invalid Secret key'
 		exit -1
