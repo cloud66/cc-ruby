@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.add_dependency('open4', '>=1.3.0')
   s.add_dependency('fog', '>=1.1.2')
   s.add_runtime_dependency('highline', '~>1.6.11')
-  s.homepage    = 'http://www.cloudblocks.co'
+  s.homepage    = 'http://cloudblocks.co'
   s.executables << 'chief'
   s.executables << 'quartz'
 end

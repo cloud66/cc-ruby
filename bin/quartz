@@ -304,7 +304,7 @@ command = nil
 OptionParser.new do |opts|
 	opts.banner = 	<<-EOF
 CloudQuartz Agent. v#{str_version} (c) 2012 CloudBlocks
-For more information please visit http://www.cloudblocks.co
+For more information please visit http://cloudblocks.co
 
 Usage: quartz [register|unregister|start|stop] [options]
 
@@ -389,13 +389,13 @@ end
 # still no api key, we need to get it
 if @api_key.empty?
 	puts 'CloudBlocks CloudQuartz'
-	@api_key = ask('Please enter your API key. (you can find it at https://www.cloudblocks.co/me): ')
+	@api_key = ask('Please enter your API key. (you can find it at https://cloudblocks.co/me): ')
 	if @api_key.length != 32
 		puts 'Invalid API key'
 		exit -1
 	end
 
-	@secret_key = ask('Please enter your Secret Key (you can find it at https://www.cloudblocks.co/me): ')
+	@secret_key = ask('Please enter your Secret Key (you can find it at https://cloudblocks.co/me): ')
 	if @secret_key.length != 32
 		puts 'Invalid Secret key'
 		exit -1

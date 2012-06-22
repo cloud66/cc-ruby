@@ -35,7 +35,7 @@ if File.exists?(config_full)
 else
 	# no config file
 	puts 'CloudBlocks ConfigChief'
-	puts 'Please enter your API key. (you can find it at https://www.cloudblocks.co/me):'
+	puts 'Please enter your API key. (you can find it at https://cloudblocks.co/me):'
 	api_key = gets
 	api_key = api_key.chomp
 	if api_key.length != 32
@@ -61,7 +61,7 @@ id = nil
 OptionParser.new do |opts|
 	opts.banner = 	<<-EOF
 ConfigChief. v#{str_version} (c) 2012 CloudBlocks
-For more information please visit http://www.cloudblocks.co
+For more information please visit http://cloudblocks.co
 
 Usage: chief [options]
 
