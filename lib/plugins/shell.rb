@@ -1,8 +1,13 @@
 require File.join(File.dirname(__FILE__), 'quartz_plugin')
 
 class Shell < QuartzPlugin
+	
+	@@version_major = 0
+	@@version_minor = 0
+	@@version_revision = 1
+
 	def info
-		{ :uid => "20e07c656e2f477d969e9561e13229fb", :name => "Shell", :version => "0.0.0" }
+		{ :uid => "20e07c656e2f477d969e9561e13229fb", :name => "Shell", :version => get_version }
 	end
 
 	def run(message)

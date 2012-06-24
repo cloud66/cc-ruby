@@ -3,8 +3,12 @@ require 'fileutils'
 
 class Mysql < QuartzPlugin
 
+	@@version_major = 0
+	@@version_minor = 0
+	@@version_revision = 1
+
 	def info
-		{ :uid => "67deb35a555344c8a7651c656e6c8e2e", :name => "MySQL Backup", :version => "0.0.0" }
+		{ :uid => "67deb35a555344c8a7651c656e6c8e2e", :name => "MySQL Backup", :version => get_version }
 	end
 
 	def run(message)

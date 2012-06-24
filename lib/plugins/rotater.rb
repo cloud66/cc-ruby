@@ -3,8 +3,12 @@ require 'fileutils'
 
 class Rotater < QuartzPlugin
 
+        @@version_major = 0
+        @@version_minor = 0
+        @@version_revision = 1
+
 	def info
-		{ :uid => "02f7d8237bcc438e8f0659babfef2911", :name => "File Rotater", :version => "0.0.0" }
+		{ :uid => "02f7d8237bcc438e8f0659babfef2911", :name => "File Rotater", :version => get_version }
 	end
 
 	def run(message)

@@ -3,8 +3,12 @@ require 'fileutils'
 
 class Logrotate < QuartzPlugin
 
+	@@version_major = 0
+	@@version_minor = 0
+	@@version_revision = 1
+
 	def info
-		{ :uid => "8f4286bfd946c8b08b234833673b8860", :name => "Log Rotate", :version => "0.0.0" }
+		{ :uid => "8f4286bfd946c8b08b234833673b8860", :name => "Log Rotate", :version => get_version }
 	end
 
 	def run(message)

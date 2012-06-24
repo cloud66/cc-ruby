@@ -3,8 +3,12 @@ require 'fileutils'
 
 class Redis < QuartzPlugin
 
+	@@version_major = 0
+	@@version_minor = 0
+	@@version_revision = 1
+
 	def info
-		{ :uid => "6342c1ef0d8bb2a47ab1362a6b02c058", :name => "Redis Backup", :version => "0.0.0" }
+		{ :uid => "6342c1ef0d8bb2a47ab1362a6b02c058", :name => "Redis Backup", :version => get_version }
 	end
 
 	def run(message)

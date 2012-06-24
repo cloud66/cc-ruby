@@ -4,8 +4,12 @@ require 'fog'
 
 class S3backup < QuartzPlugin
 
+	@@version_major = 0
+	@@version_minor = 0
+	@@version_revision = 1
+
 	def info
-		{ :uid => "d3533989f9d542f393566511e8eb2090", :name => "S3 Backup", :version => "0.0.0" }
+		{ :uid => "d3533989f9d542f393566511e8eb2090", :name => "S3 Backup", :version => get_version }
 	end
 
 	def run(message)

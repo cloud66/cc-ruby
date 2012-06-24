@@ -40,4 +40,14 @@ class QuartzPlugin
 			{ :ok => false, :message => stderr.read.strip}
 		end
 	end
+
+	@@version_major = 0
+	@@version_minor = 0
+	@@version_revision = 0
+
+	def get_version
+	
+		"#{@@version_major}.#{@@version_minor}.#{@@version_revision}"
+	
+	end
 end

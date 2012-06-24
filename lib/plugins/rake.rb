@@ -1,8 +1,13 @@
 require File.join(File.dirname(__FILE__), 'quartz_plugin')
 
 class Rake < QuartzPlugin
+
+	@@version_major = 0
+	@@version_minor = 0
+	@@version_revision = 1
+
 	def info
-		{ :uid => "62e3583abfc24f209916c4ff97661fa0", :name => "Rake", :version => "0.0.0" }
+		{ :uid => "62e3583abfc24f209916c4ff97661fa0", :name => "Rake", :version => get_version }
 	end
 
 	def run(message)
