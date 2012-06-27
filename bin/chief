@@ -26,7 +26,7 @@ config_dir = File.join(Dir.home, '.cloudblocks')
 config_full = File.join(config_dir, config_file)
 
 api_key = ''
-faye_url = 'https://sockets.cloudblocks.co/'
+faye_url = 'http://sockets.cloudblocks.co/'
 
 if File.exists?(config_full)	
 	# config file present

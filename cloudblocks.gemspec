@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.summary     = "CloudBlocks Gem and Agent"
   s.description = "See http://cloudblocks.co for more info"
   s.authors     = ["CloudBlocks"]
-  s.email       = 'hello@thecloudblocks.com'
+  s.email       = 'hello@cloudblocks.co'
   s.files       = FileList["lib/config-chief.rb", "lib/cloud-quartz.rb", 'lib/plugins/**/*.rb'].to_a
   s.add_dependency('httparty', '>= 0.8.1')
   s.add_dependency('json', '>= 1.6.3')
