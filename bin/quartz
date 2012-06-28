@@ -291,7 +291,7 @@ config_file = 'cloudblocks.yaml'
 @log_full = File.join('/tmp', @log_file)
 
 @api_key = ''
-@faye_url = 'http://sockets.cloudblocks.co/push/'
+@faye_url = 'https://sockets.cloudblocks.co/push/'
 commands = %w[register unregister start stop]
 
 @plugins = {}
