@@ -300,7 +300,7 @@ commands = %w[register unregister start stop]
 @daemon_mode = true
 command = nil
 @agent_id = ''
-@realtime = false
+@realtime = true
 OptionParser.new do |opts|
 	opts.banner = 	<<-EOF
 CloudQuartz Agent. v#{str_version} (c) 2012 CloudBlocks
@@ -349,8 +349,12 @@ EOF
 		@secret_key = v
 	end
 
-	opts.on('-r', '--realtime', 'Enable realtime notifications (beta)') do |v|
+	opts.on('-r', '--realtime', 'Enable realtime notifications (default)') do |v|
 		@realtime = true
+	end
+
+	opts.on('-R', '--no-realtime', 'Disable realtime notifications') do |v|
+		@realtime = false
 	end
 
 	opts.on_tail("-h", "--help", "Show this message") do
