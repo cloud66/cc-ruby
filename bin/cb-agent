@@ -422,25 +422,16 @@ if @api_key.empty?
 		puts 'Invalid Secret key'
 		exit -1
 	end
-
-	save_config
-	puts 'Configuration Saved'
 end
 
 # no agent id?
 if @agent_id.empty?
-	q = ask("Register the agent? ") { |q| q.default = "Y" }
+	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :secret_key => @secret_key)
+	register 
+	q = ask("Start the agent as a daemon? ") { |q| q.default = "Y" }
 	if q.chomp.downcase != 'n'
-		@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :secret_key => @secret_key)
-		register 
-
-		q = ask("Start the agent as a daemon? ") { |q| q.default = "Y" }
-		if q.chomp.downcase != 'n'
-			@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
-			start
-		else
-			exit 0
-		end
+		@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
+		start
 	else
 		exit 0
 	end
