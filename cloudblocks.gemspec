@@ -2,12 +2,12 @@ require 'rake'
 
 Gem::Specification.new do |s|
   s.name        = 'cloudblocks'
-  s.version     = '0.0.12b'
-  s.date        = '2012-06-28'
+  s.version     = '0.0.12d'
+  s.date        = '2012-06-29'
   s.summary     = "CloudBlocks Gem and Agent"
   s.description = "See http://cloudblocks.co for more info"
   s.authors     = ["CloudBlocks"]
-  s.email       = 'hello@cloudblocks.co'
+  s.email       = 'hello@thecloudblocks.com'
   s.files       = FileList["lib/config-chief.rb", "lib/cloud-quartz.rb", 'lib/plugins/**/*.rb'].to_a
   s.add_dependency('httparty', '>= 0.8.1')
   s.add_dependency('json', '>= 1.6.3')
@@ -19,5 +19,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency('highline', '~>1.6.11')
   s.homepage    = 'http://cloudblocks.co'
   s.executables << 'chief'
-  s.executables << 'quartz'
+  s.executables << 'cb-agent'
 end
