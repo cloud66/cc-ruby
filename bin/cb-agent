@@ -34,14 +34,14 @@ public
 
 def start
 	begin
-		@log.info "Starting the CloudBlocks Agent"
-		puts "Starting the CloudBlocks Agent"
+		@log.info "Attempting to start the CloudBlocks Agent"
+		puts "Attempting to start the CloudBlocks Agent..."
 
 		pid = get_pid
 		if pid != 0
 			#check if the process is actually running
 			if pid_process_running?(pid)
-				warn "The CloudBlocks Agent is already running. Use stop command to stop it or --help for more info"
+				warn "The CloudBlocks Agent was already running. Use stop command to stop it or --help for more info"
 				exit -1
 			else
 				File.delete(@pid_full)
@@ -71,16 +71,21 @@ def start
 			Process.kill('TERM', pid)
 			warn "Cannot start the CloudBlocks Agent: #{exc.message}"
 		end
+
+		puts "The CloudBlocks Agent has been started!"
 	else
 		run
 	end
+
 
 	exit 0
 end
 
 def stop
 	pid = get_pid
-	@log.info "Stopping the CloudBlocks Agent"
+	@log.info "Attempting to stop the CloudBlocks Agent"
+	puts "Attempting to stop the CloudBlocks Agent..."
+
 	begin
 		@quartz.status(2, @version, plugin_meta_data)
 		EM.stop
@@ -93,15 +98,15 @@ def stop
 		rescue
 		end
 		File.delete(@pid_full)
-		puts "The CloudBlocks Agent was stopped"
+		puts "The CloudBlocks Agent has been stopped!"
 	else
-		warn "Did nothing - The CloudBlocks Agent was not running"
+		warn "Nothing to do - the CloudBlocks Agent was not running"
 		exit -1
 	end
 end
 
 def register
-	puts "Registering the CloudBlocks Agent with #{@url} and API Key #{@api_key}"
+	puts "Registering the CloudBlocks Agent with #{@url} and API Key #{@api_key}..."
 	os_name = RUBY_PLATFORM
 	os_id = os_name.include?('darwin') ? 5 : 1
 	agent = { :agent_type_id => os_id, :agent_name => Socket.gethostname, :agent_timezone => Time.new.zone, :extra => os_name}
@@ -118,10 +123,11 @@ def register
 end
 
 def unregister
-	puts "Unregister the CloudBlocks Agent #{@agent_id} with #{@url}"
+	puts "Unregistering the CloudBlocks Agent #{@agent_id} with #{@url}..."
 	@agent_id = ""
 	@quartz.unregister(@agent_id)
 	save_config
+	puts "Unregistered successfully!"
 end
 
 private
@@ -410,7 +416,7 @@ end
 
 # still no api key, we need to get it
 if @api_key.empty?
-	puts 'CloudBlocks Agent One-Time Setup'
+	puts 'CloudBlocks Agent initial setup:'
 	@api_key = ask('Please enter your API key. (you can find it at https://cloudblocks.co/me): ')
 	if @api_key.length != 32
 		puts 'Invalid API key'
@@ -428,13 +434,8 @@ end
 if @agent_id.empty?
 	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :secret_key => @secret_key)
 	register 
-	q = ask("Start the agent as a daemon? ") { |q| q.default = "Y" }
-	if q.chomp.downcase != 'n'
-		@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
-		start
-	else
-		exit 0
-	end
+	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
+	start
 end
 
 if command.nil? || command.empty?
@@ -444,7 +445,7 @@ if command.nil? || command.empty?
 		puts "The CloudBlocks Agent is currently running. Use the stop command to stop it or --help for more info"
 		exit -1
 	end
-	puts 'The CloudBlocks Agent is currently not running. Use the start command to start it or --help for more information'
+	puts 'The CloudBlocks Agent is not currently running. Use the start command to start it or --help for more information'
 	exit -1
 end
 

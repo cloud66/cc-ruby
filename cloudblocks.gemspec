@@ -2,7 +2,7 @@ require 'rake'
 
 Gem::Specification.new do |s|
   s.name        = 'cloudblocks'
-  s.version     = '0.0.12g'
+  s.version     = '0.0.13'
   s.date        = '2012-06-29'
   s.summary     = "CloudBlocks Gem and Agent"
   s.description = "See http://cloudblocks.co for more info"
@@ -18,7 +18,6 @@ Gem::Specification.new do |s|
   s.add_dependency('fog', '>=1.1.2')
   s.add_runtime_dependency('highline', '~>1.6.11')
   s.homepage    = 'http://cloudblocks.co'
-  s.executables << 'chief'
   s.executables << 'cb-agent'
   s.default_executable = 'cb-agent'
 end
