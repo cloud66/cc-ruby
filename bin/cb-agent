@@ -410,7 +410,7 @@ end
 
 # still no api key, we need to get it
 if @api_key.empty?
-	puts 'CloudBlocks Agent'
+	puts 'CloudBlocks Agent One-Time Setup'
 	@api_key = ask('Please enter your API key. (you can find it at https://cloudblocks.co/me): ')
 	if @api_key.length != 32
 		puts 'Invalid API key'
