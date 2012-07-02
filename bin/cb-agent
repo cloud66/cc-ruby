@@ -442,10 +442,10 @@ if command.nil? || command.empty?
 	pid = get_pid
 	#check if the process is actually running
 	if pid != 0 && pid_process_running?(pid)
-		puts "The CloudBlocks Agent is currently running. Use the stop command to stop it or --help for more info"
+		puts "The CloudBlocks Agent is currently running. Use 'cb-agent stop' to stop it or --help for more info"
 		exit -1
 	end
-	puts 'The CloudBlocks Agent is not currently running. Use the start command to start it or --help for more information'
+	puts "The CloudBlocks Agent is not currently running. Use 'cb-agent start' to start it or --help for more information"
 	exit -1
 end
 
