@@ -16,7 +16,6 @@ class QuartzPlugin
 	end
 
 	def payload(message)
-		@log.debug "Message #{message}"
 		raw_payload = message['payload']
 		@log.debug "Payload #{raw_payload}"
 		parsed_payload = JSON.parse(raw_payload) unless raw_payload.nil?

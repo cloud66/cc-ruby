@@ -140,7 +140,7 @@ def load_plugins
 		if file != 'quartz_plugin'
 			# is it a valid plugin?
 			require "#{file}"
-			classname = File.basename(file, '.rb').capitalize
+			classname = File.basename(file, '.rb').split('_').collect{ |part| part.capitalize }.join
 			begin
 				clazz = Kernel.const_get(classname)
 				if clazz.ancestors[1].name == 'QuartzPlugin'
