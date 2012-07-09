@@ -2,7 +2,7 @@ username 		: lvangool
 api_key 		: c9d2b5a70fec5ac4cfa94743accf27fc 
 region			: Europe
 container 		: TestContainer
-remote_directory: mysql/logs/backup
+remote_path		: ""
 local_pattern 	: ~/work/cloudblocks/cc-ruby/bin/*.sh
-keep            : "1"
+keep            : "3"
 testing			: true

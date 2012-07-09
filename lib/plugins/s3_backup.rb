@@ -1,30 +1,30 @@
 require File.join(File.dirname(__FILE__), 'quartz_plugin')
 require 'fileutils'
 require 'fog'
-require 'set'
 
-class RackspaceBackup < QuartzPlugin
+class S3Backup < QuartzPlugin
 
 	@@version_major = 0
 	@@version_minor = 0
 	@@version_revision = 1
 
 	def info
-		{ :uid => "86a34908c51311e1a0a923db6188709b", :name => "Rackspace Backup", :version => get_version } 
+		{ :uid => "d3533989f9d542f393566511e8eb2090", :name => "S3 Backup", :version => get_version }
 	end
 
 	def run(message)
-
 		pl = payload(message)
+
 		@log.debug "Pruned payload #{pl}"
 
-		@username 				= pl['username']
-		@api_key 				= pl['api_key']
-		@container 				= pl['container']
-		@remote_path 		 	= pl['remote_path']
-		@region					= pl['region']
-		@keep 					= pl['keep'].empty? ? 0 : pl['keep'].to_i
+		@access_key 			= pl['access_key']
+		@secret_key 			= pl['secret_key']
+		@bucket 				= pl['bucket']
+		@region 				= pl['region']
+		@remote_path 		= pl['remote_path']
 		@local_pattern 			= pl['local_pattern']
+		@keep 					= pl['keep'].empty? ? 0 : pl['keep'].to_i
+
 		@testing				= pl['testing']
 
 		return transfer
@@ -33,29 +33,22 @@ class RackspaceBackup < QuartzPlugin
 	private
 
 	def get_connection
-		#Fog.mock! unless @testing.nil? || @testing == false	
-		if @region == 'europe'
-			connection = Fog::Storage.new(
-  				:provider           	=> 'Rackspace',
-  				:rackspace_username 	=> @username,
-  				:rackspace_api_key  	=> @api_key,
-  				:rackspace_auth_url 	=> "lon.auth.api.rackspacecloud.com"
-				)
-		else
-			connection = Fog::Storage.new(
-  				:provider           	=> 'Rackspace',
-  				:rackspace_username 	=> @username,
-  				:rackspace_api_key  	=> @api_key,
-  				)
-		end
+		#Fog.mock! unless @testing.nil? || @testing == false
+		connection = Fog::Storage.new(
+			:provider               => 'AWS',
+			:aws_access_key_id     	=> @access_key,
+			:aws_secret_access_key	=> @secret_key,
+			:region                 => @region
+		)
 		connection
-
 	end
 
 	def transfer
 		begin
-			#set up the rackspace connection
+			#set up the s3 connection
 			@connection = get_connection
+			#synchronie the file times
+			@connection.sync_clock
 			if @keep <= 0
 				sync_files_without_version_history
 			else	
@@ -73,9 +66,9 @@ class RackspaceBackup < QuartzPlugin
 				message = message[1] 
 				return run_result(false, message)
 			elsif exc.response.status == 404
-				return run_result(false, "Remote rackspace serivce or container not found (404)")
+				return run_result(false, "Remote s3 service or bucket not found (404)")
 			elsif exc.response.status != 0
-				return run_result(false, "Remote rackspace serivce returned error #{exc.response.status} without any more details")
+				return run_result(false, "Remote s3 service returned error #{exc.response.status} without any more details")
 			else
 				return run_result(false, exc.message)
 			end
@@ -108,13 +101,13 @@ class RackspaceBackup < QuartzPlugin
 			@log.debug "Copying #{f} to #{new_remote_filename}"
 			count += 1
 
-			#push file to rackspace
+			#push file to s3
 			File.open(f, 'r') do |file| 
-				@connection.put_object(@container, new_remote_filename, file) 
+				@connection.put_object(@bucket, new_remote_filename, file) 
 			end
 		end
 
-		return run_result(true, "Successully pushed #{count} file(s) to Rackspace Cloud Files container (without version history)")
+		return run_result(true, "Successully pushed #{count} file(s) to Amazon s3 bucket (without version history)")
 
 	end
 
@@ -125,13 +118,13 @@ class RackspaceBackup < QuartzPlugin
 		count = 0
 
 		#get remote directory
-		directory = @connection.directories.get(@container)
+		directory = @connection.directories.get(@bucket)
 
-		#cache the rackspace remote directory identifing all appropriate files
+		#cache the s3 remote directory identifing all appropriate files
 		remote_path_match = Regexp.new("^#{@remote_path}", "i")
-		rackspace_directory = directory.files.map {|f| f.key }
+		s3_directory = directory.files.map {|f| f.key }
 
-		all_remote_files = rackspace_directory.select {|m| m =~ remote_path_match}.map {|m| remove_initial_slash(m.gsub(remote_path_match, ''))}
+		all_remote_files = s3_directory.select {|m| m =~ remote_path_match}.map {|m| remove_initial_slash(m.gsub(remote_path_match, ''))}
 		archive_regex = /(?<folder>^Archive_CloudBlocks \(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\)\/)/
 		non_archive_files = all_remote_files.reject { |m| m =~ archive_regex }
 		archived_files = all_remote_files.select { |m| m =~ archive_regex }
@@ -149,10 +142,10 @@ class RackspaceBackup < QuartzPlugin
 			new_remote_filename = remove_initial_slash(File.join(@remote_path, new_remote_relative_filename))
 				
 			@log.debug "Copying #{existing_remote_filename} to #{new_remote_filename}"
-			@connection.copy_object @container, existing_remote_filename, @container, new_remote_filename
+			@connection.copy_object @bucket, existing_remote_filename, @bucket, new_remote_filename
 			
 			@log.debug "Removing #{existing_remote_filename}"
-			@connection.delete_object @container, existing_remote_filename
+			@connection.delete_object @bucket, existing_remote_filename
 
 			#add newly archived file to list of archived files
 			archived_files << new_remote_relative_filename
@@ -160,13 +153,13 @@ class RackspaceBackup < QuartzPlugin
 
 		#copy up all new files from source
 		all_local_files = Dir.glob(File.expand_path(@local_pattern))
-		return run_result(true, "No file(s) identified to push to Rackspace Cloud Files container (with version history)") if all_local_files.size == 0
+		return run_result(true, "No file(s) identified to push to Amazon s3 bucket (with version history)") if all_local_files.size == 0
  
 		#determine a local root to create relative files (TODO?)
 		#local_root = ""
 		#local_root_regex = Regexp.new local_root
 		
-		#copy all local matches up to rackspace
+		#copy all local matches up to s3
 		all_local_files.each do |f|
 			
 			#skip to next match if current is a directory
@@ -177,9 +170,9 @@ class RackspaceBackup < QuartzPlugin
 			@log.debug "Copying #{f} to #{new_remote_filename}"
 			count += 1
 			
-			#push file to rackspace
+			#push file to s3
 			File.open(f, 'r') do |file|				
-				@connection.put_object @container, new_remote_filename, file
+				@connection.put_object @bucket, new_remote_filename, file
 			end
 
 		end
@@ -196,11 +189,11 @@ class RackspaceBackup < QuartzPlugin
 			archived_files.select { |m| m =~ archive_regex }.each do |file|
 				remote_file_to_remove = remove_initial_slash(File.join(@remote_path, file))
 				@log.debug "Removing old archive file #{remote_file_to_remove}"
-				@connection.delete_object @container, remote_file_to_remove
+				@connection.delete_object @bucket, remote_file_to_remove
 			end
 		end
 
-		return run_result(true, "Successully pushed #{count} file(s) to Rackspace Cloud Files container (with version history)")
+		return run_result(true, "Successully pushed #{count} file(s) to Amazon s3 bucket (with version history)")
 
 	end
 

@@ -1,0 +1,9 @@
+access_key 			: AKIAJWKEFBY7FUPG6DTA
+secret_key 			: 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
+bucket 				: testbucket.cldblx
+region				: eu-west-1
+remote_path			: "/test/backups"
+local_pattern 		: ~/work/cloudblocks/cc-ruby/bin/*.sh
+keep            	: "3"
+testing				: true
+
