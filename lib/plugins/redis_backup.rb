@@ -1,7 +1,7 @@
 require File.join(File.dirname(__FILE__), 'quartz_plugin')
 require 'fileutils'
 
-class Redis < QuartzPlugin
+class RedisBackup < QuartzPlugin
 
 	@@version_major = 0
 	@@version_minor = 0

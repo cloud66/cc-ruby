@@ -1,7 +1,7 @@
 require File.join(File.dirname(__FILE__), 'quartz_plugin')
 require 'fileutils'
 
-class Rotater < QuartzPlugin
+class FileRotate < QuartzPlugin
 
         @@version_major = 0
         @@version_minor = 0
