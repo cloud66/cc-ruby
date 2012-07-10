@@ -150,7 +150,8 @@ def load_plugins
 
 	files = Dir.glob("#{@load_path}/*.rb")
 	files.each do |file|
-		if file != 'quartz_plugin'
+		unless file =~ /quartz_plugin/
+
 			# is it a valid plugin?
 			require "#{file}"
 			classname = File.basename(file, '.rb').split('_').collect{ |part| part.capitalize }.join
