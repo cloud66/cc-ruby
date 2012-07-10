@@ -50,10 +50,23 @@ def start
 
 		check_version
 		load_plugins
-
-		@log.info @quartz.status(1, @version, plugin_meta_data)
 	rescue => exc
 		@log.error exc.message
+		exit -1
+	end
+
+	begin
+		@log.info @quartz.status(1, @version, plugin_meta_data)
+	rescue Exception => e
+		message = e.message
+		if message =~ /Couldn't find Agent with uid =/
+			@log.warn "This agent is no longer registered at the server. The old registration details have been removed from this agent. Please re-run the agent to re-register it."
+			puts "This agent is no longer registered at the server. The old registration details have been removed from this agent. Please re-run the agent to re-register it."
+			puts @config_full
+		File.delete(@config_full)
+		else
+			@log.error e.message
+		end
 		exit -1
 	end
 
