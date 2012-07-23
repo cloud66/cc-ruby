@@ -2,8 +2,8 @@ require 'rake'
 
 Gem::Specification.new do |s|
   s.name        = 'cloudblocks'
-  s.version     = '0.0.14'
-  s.date        = '2012-06-29'
+  s.version     = '0.0.16'
+  s.date        = '2012-07-10'
   s.summary     = "CloudBlocks Gem and Agent"
   s.description = "See http://cloudblocks.co for more info"
   s.authors     = ["CloudBlocks"]
@@ -15,7 +15,8 @@ Gem::Specification.new do |s|
   s.add_dependency('eventmachine', '~>1.0.0.beta.4')
   s.add_dependency('faye', '>=0.8.0')
   s.add_dependency('open4', '>=1.3.0')
-  s.add_dependency('fog', '>=1.1.2')
+  s.add_dependency('fog', '~>1.1.0')
+  
   s.add_runtime_dependency('highline', '~>1.6.11')
   s.homepage    = 'http://cloudblocks.co'
   s.executables << 'cb-agent'

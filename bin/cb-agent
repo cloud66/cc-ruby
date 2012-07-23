@@ -63,7 +63,7 @@ def start
 			@log.warn "This agent is no longer registered at the server. The old registration details have been removed from this agent. Please re-run the agent to re-register it."
 			puts "This agent is no longer registered at the server. The old registration details have been removed from this agent. Please re-run the agent to re-register it."
 			puts @config_full
-		File.delete(@config_full)
+			File.delete(@config_full)
 		else
 			@log.error e.message
 		end
@@ -259,30 +259,35 @@ def check_version
 	end
 end
 
+def pulsate
+	@log.debug "Pulsate"
+	begin
+		@quartz.pulse 
+	rescue => exc
+		@log.error "Failed to pulsate due to #{exc.message}"
+	end
+end
+
 def run
 	EM.run{
-	 	Signal.trap('INT') { stop }
-	    Signal.trap('TERM'){ stop }
+		Signal.trap('INT') { stop }
+		Signal.trap('TERM'){ stop }
 
 	    # pulse
+	    pulsate
 		EM.add_periodic_timer 60 do  # 1 minute
-			@log.debug "Pulseate"
-			begin
-				@quartz.pulse 
-			rescue => exc
-				@log.error "Failed to pulsate due to #{exc.message}"
-			end
+			pulsate
 		end
 
-	    if @realtime
-	    	@log.info "Listening to realtime nofitifications from /quartz/agents/#{@agent_id} on #{@faye_url}" 
-	    	client = Faye::Client.new(@faye_url)
+		if @realtime
+			@log.info "Listening to realtime nofitifications from /quartz/agents/#{@agent_id} on #{@faye_url}" 
+			client = Faye::Client.new(@faye_url)
 			client.subscribe("/quartz/agents/#{@agent_id}") do |message|
-    			@log.info "Got realtime notice for a new job #{message}"
-    			get_job
+				@log.info "Got realtime notice for a new job #{message}"
+				get_job
 			end
-	    else
-	    	@log.info "Checking for new jobs every 5 seconds"
+		else
+			@log.info "Checking for new jobs every 5 seconds"
 			EM.add_periodic_timer 5 do
 				get_job
 			end
@@ -304,10 +309,10 @@ end
 def pid_process_running?(pid)
 	begin
 		pid_number = pid.to_i
-  		Process.getpgid(pid_number)
-  		true
+		Process.getpgid(pid_number)
+		true
 	rescue Errno::ESRCH
-  		false
+		false
 	end
 end
 
@@ -341,13 +346,13 @@ command = nil
 @realtime = true
 OptionParser.new do |opts|
 	opts.banner = 	<<-EOF
-CloudBlocks Agent. v#{str_version} (c) 2012 CloudBlocks
-For more information please visit http://cloudblocks.co
+	CloudBlocks Agent. v#{str_version} (c) 2012 CloudBlocks
+	For more information please visit http://cloudblocks.co
 
-Usage: cb-agent [register|unregister|start|stop] [options]
+	Usage: cb-agent [register|unregister|start|stop] [options]
 
-Options:
-EOF
+	Options:
+	EOF
 
 	opts.on('--url URL', 'Server URL') do |server_url|
 		@url = server_url
@@ -399,11 +404,11 @@ EOF
 		puts opts
 		puts <<-EOF
 
-Commands:
-	register 			Register the CloudBlocks Agent
-	start 				Starts the CloudBlocks Agent as a deamon
-	stop 				Stops the CloudBlocks Agent daemon
-	unregister			Unregisters the CloudBlocks Agent
+		Commands:
+		register 			Register the CloudBlocks Agent
+		start 				Starts the CloudBlocks Agent as a deamon
+		stop 				Stops the CloudBlocks Agent daemon
+		unregister			Unregisters the CloudBlocks Agent
 
 		EOF
 		exit 0

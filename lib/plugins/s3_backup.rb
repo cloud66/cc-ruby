@@ -21,7 +21,7 @@ class S3Backup < QuartzPlugin
 		@secret_key 			= pl['secret_key']
 		@bucket 				= pl['bucket']
 		@region 				= pl['region']
-		@remote_path 		= pl['remote_path']
+		@remote_path 			= pl['remote_path']
 		@local_pattern 			= pl['local_pattern']
 		@keep 					= pl['keep'].empty? ? 0 : pl['keep'].to_i
 
