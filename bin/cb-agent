@@ -56,7 +56,7 @@ def start
 	end
 
 	begin
-		@log.info @quartz.status(1, @version, plugin_meta_data)
+		@log.info @quartz.init(@version, plugin_meta_data)
 	rescue Exception => e
 		message = e.message
 		if message =~ /Couldn't find Agent with uid =/
@@ -99,9 +99,9 @@ def stop
 	@log.info "Attempting to stop the CloudBlocks Agent"
 	puts "Attempting to stop the CloudBlocks Agent..."
 
-	begin
-		@quartz.status(2, @version, plugin_meta_data)
-		EM.stop
+	begin		
+		@quartz.status(2)
+		EM.stop		
 	rescue
 	end
 

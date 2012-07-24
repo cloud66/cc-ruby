@@ -37,9 +37,14 @@ class CloudQuartz
 		process(self.class.get("/agent/#{@agent_id}/pulse.json", { :headers => http_headers } ))
 	end
 
-	def status(stat, version, plugins)
-		data = { :status => stat, :version => version, :plugins => plugins }
+	def status(stat)
+		data = { :status => stat }
 		process(self.class.post("/agent/#{@agent_id}/status.json", { :headers => http_headers.merge({'Content-Type' => 'application/json'}), :body => data.to_json }))
+	end
+
+	def init(version, plugins)
+		data = { :version => version, :plugins => plugins }
+		process(self.class.post("/agent/#{@agent_id}/initialize.json", { :headers => http_headers.merge({'Content-Type' => 'application/json'}), :body => data.to_json }))
 	end
 
 	private
