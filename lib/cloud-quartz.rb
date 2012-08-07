@@ -14,49 +14,41 @@ class CloudQuartz
 	end
 
 	def get_job
-		process(self.class.get("/queue/#{@agent_id}.json", { :headers => http_headers } ))
+		process(self.class.get("/queue/#{@agent_id}.json", { :headers => ClientAuth.build_headers(@api_key, @secret_key) } ))
 	end
 
 	def register(agent)
-		process(self.class.post('/agent.json', { :headers => http_headers.merge({'Content-Type' => 'application/json'}), :body => agent.to_json }))
+		process(self.class.post('/agent.json', { :headers => ClientAuth.build_headers(@api_key, @secret_key).merge({'Content-Type' => 'application/json'}), :body => agent.to_json }))
 	end
 
 	def unregister(agent)
-		process(self.class.delete("/agent/#{@agent_id}.json", :headers => http_headers))
+		process(self.class.delete("/agent/#{@agent_id}.json", :headers => ClientAuth.build_headers(@api_key, @secret_key)))
 	end
 
-	def check_version
-		self.class.get("/agent/version", :headers => http_headers)
-	end
+	#TODO: Is this deprecated now?
+	#def check_version
+	#	self.class.get("/agent/version", :headers => ClientAuth.build_headers(@api_key, @secret_key))
+	#end
 
 	def post_results(job_id, data)
-		process(self.class.post("/job/#{job_id}/complete.json", { :headers => http_headers.merge({'Content-Type' => 'application/json'}), :body => data.to_json } ))
+		process(self.class.post("/job/#{job_id}/complete.json", { :headers => ClientAuth.build_headers(@api_key, @secret_key).merge({'Content-Type' => 'application/json'}), :body => data.to_json } ))
 	end
 
 	def pulse
-		process(self.class.get("/agent/#{@agent_id}/pulse.json", { :headers => http_headers } ))
+		process(self.class.get("/agent/#{@agent_id}/pulse.json", { :headers => ClientAuth.build_headers(@api_key, @secret_key) } ))
 	end
 
 	def status(stat)
 		data = { :status => stat }
-		process(self.class.post("/agent/#{@agent_id}/status.json", { :headers => http_headers.merge({'Content-Type' => 'application/json'}), :body => data.to_json }))
+		process(self.class.post("/agent/#{@agent_id}/status.json", { :headers => ClientAuth.build_headers(@api_key, @secret_key).merge({'Content-Type' => 'application/json'}), :body => data.to_json }))
 	end
 
 	def init(version, plugins)
 		data = { :version => version, :plugins => plugins }
-		process(self.class.post("/agent/#{@agent_id}/initialize.json", { :headers => http_headers.merge({'Content-Type' => 'application/json'}), :body => data.to_json }))
+		process(self.class.post("/agent/#{@agent_id}/initialize.json", { :headers => ClientAuth.build_headers(@api_key, @secret_key).merge({'Content-Type' => 'application/json'}), :body => data.to_json }))
 	end
 
 	private
-
-	def http_headers
-		time = Time.now.utc.to_i
-		{ 'api_key' => @api_key, 'hash' => signature(time), 'time' => time.to_s }
-	end
-
-	def signature(time)
-		Digest::SHA1.hexdigest("#{@api_key}#{@secret_key}#{time}").downcase
-	end
 
 	def process(response)
 		if response.code != 200

@@ -2,6 +2,7 @@
 
 require 'yaml'
 require File.expand_path("../../lib/cloud-quartz", __FILE__)
+require File.expand_path("../../lib/client_auth", __FILE__)
 require 'optparse'
 require 'socket'
 require 'logger'
@@ -48,7 +49,7 @@ def start
 			end
 		end
 
-		check_version
+		#check_version
 		load_plugins
 	rescue => exc
 		@log.error exc.message
@@ -246,18 +247,18 @@ def run_plugin(plugin, message)
 	end
 end
 
-def check_version
-	begin
-		result = @quartz.check_version
-		if result['ok']
-			latest = result['latest']
-			@log.warn 'A newer version of the CloudBlocks Agent is available. Please update the cloudblocks gem. See http://help.cloudblocks.co for more info' if latest > @version
-		end
-	rescue => exc
-		warn "Cannot connect to the CloudBlocks server"
-		exit -1
-	end
-end
+#def check_version
+#	begin
+#		result = @quartz.check_version
+#		if result['ok']
+#			latest = result['latest']
+#			@log.warn 'A newer version of the CloudBlocks Agent is available. Please update the cloudblocks gem. See http://help.cloudblocks.co for more info' if latest > @version
+#		end
+#	rescue => exc
+#		warn "Cannot connect to the CloudBlocks server"
+#		exit -1
+#	end
+#end
 
 def pulsate
 	@log.debug "Pulsate"
@@ -282,7 +283,8 @@ def run
 		if @realtime
 			@log.info "Listening to realtime nofitifications from /quartz/agents/#{@agent_id} on #{@faye_url}" 
 			client = Faye::Client.new(@faye_url)
-			client.subscribe("/quartz/agents/#{@agent_id}") do |message|
+			client.add_extension(ClientAuth.new(@api_key, @secret_key))
+			client.subscribe("/user/#{@api_key}/quartz/agents/#{@agent_id}") do |message|
 				@log.info "Got realtime notice for a new job #{message}"
 				get_job
 			end
