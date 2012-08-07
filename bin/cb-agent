@@ -9,7 +9,7 @@ require 'logger'
 require 'highline/import'
 begin
 	gem 'eventmachine', '~>1.0.0.beta.4'
-	gem 'faye', '~>0.8.0'
+	gem 'faye', '~>0.8.3'
 	gem 'highline', '~>1.6.11'
 
 	require 'eventmachine'
@@ -282,6 +282,7 @@ def run
 
 		if @realtime
 			@log.info "Listening to realtime nofitifications from /quartz/agents/#{@agent_id} on #{@faye_url}" 
+
 			client = Faye::Client.new(@faye_url)
 			client.add_extension(ClientAuth.new(@api_key, @secret_key))
 			client.subscribe("/user/#{@api_key}/quartz/agents/#{@agent_id}") do |message|
@@ -336,7 +337,7 @@ Dir.mkdir(@cb_tmp_dir) if !File.exists?(@cb_tmp_dir)
 @log_full = File.join(@cb_tmp_dir, @log_file)
 
 @api_key = ''
-@faye_url = 'https://sockets.cloudblocks.co/push/'
+@faye_url = 'https://sockets.cloudblocks.co/push'
 commands = %w[register unregister start stop]
 
 @plugins = {}
@@ -383,7 +384,6 @@ OptionParser.new do |opts|
 
 	opts.on('--sockets SOCKETS', 'Sockets URL') do |v|
 		@faye_url = v
-		@faye_url = "#{@faye_url}/" if @faye_url[-1] != '/'
 	end
 
 	opts.on('--api-key APIKEY', 'API key') do |v|

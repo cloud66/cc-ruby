@@ -5,7 +5,7 @@ class ClientAuth
 	end
 
 	def outgoing(message, callback)
-
+ 
     	# Again, leave non-subscribe messages alone
     	if message['channel'] != '/meta/subscribe'
     		return callback.call(message)
