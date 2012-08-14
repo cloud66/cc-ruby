@@ -119,11 +119,11 @@ def stop
 	end
 end
 
-def register
+def register(stack_uid = nil)
 	puts "Registering the CloudBlocks Agent with #{@url} and API Key #{@api_key}..."
 	os_name = RUBY_PLATFORM
 	os_id = os_name.include?('darwin') ? 5 : 1
-	agent = { :agent_type_id => os_id, :agent_name => Socket.gethostname, :agent_timezone => Time.new.zone, :extra => os_name}
+	agent = { :agent_type_id => os_id, :agent_name => Socket.gethostname, :agent_timezone => Time.new.zone, :extra => os_name, :stack_uid => stack_uid }
 
 	result = @quartz.register(agent)
 	if result['ok']
@@ -394,6 +394,10 @@ OptionParser.new do |opts|
 		@secret_key = v
 	end
 
+	opts.on('--stack STACKIUD', 'Stack id') do |v|
+		@stack_uid = v
+	end
+
 	opts.on('-r', '--realtime', 'Enable realtime notifications (default)') do |v|
 		@realtime = true
 	end
@@ -454,7 +458,7 @@ end
 # no agent id?
 if @agent_id.empty?
 	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :secret_key => @secret_key)
-	register 
+	register(@stack_uid) 
 	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
 	start
 end
