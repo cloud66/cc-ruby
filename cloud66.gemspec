@@ -1,13 +1,13 @@
 require 'rake'
 
 Gem::Specification.new do |s|
-  s.name        = 'cloudblocks'
-  s.version     = '0.0.18'
-  s.date        = '2012-08-14'
-  s.summary     = "CloudBlocks Gem and Agent"
-  s.description = "See http://cloudblocks.co for more info"
-  s.authors     = ["CloudBlocks"]
-  s.email       = 'hello@cloudblocks.co'
+  s.name        = 'cloud66'
+  s.version     = '0.0.2'
+  s.date        = '2012-08-20'
+  s.summary     = "Cloud 66 Server Agent"
+  s.description = "See http://cloud66.io for more info"
+  s.authors     = ["Cloud 66"]
+  s.email       = 'hello@cloud66.io'
   s.files       = FileList["lib/cloud-quartz.rb", "lib/client_auth.rb", 'lib/plugins/**/*.rb'].to_a
   s.add_dependency('httparty', '>= 0.8.1')
   s.add_dependency('json', '>= 1.6.3')
@@ -17,9 +17,8 @@ Gem::Specification.new do |s|
   s.add_dependency('open4', '>=1.3.0')
   s.add_dependency('fog', '~>1.4.0')
   s.add_dependency('cloud66-backup', '~>3.0.25')
-  
-  s.add_runtime_dependency('highline', '~>1.6.11')
-  s.homepage    = 'http://cloudblocks.co'
-  s.executables << 'cb-agent'
-  s.default_executable = 'cb-agent'
+  s.add_dependency('highline', '~>1.6.11')
+  s.homepage    = 'http://cloud66.io'
+  s.executables << 'c66-agent'
+  s.default_executable = 'c66-agent'
 end

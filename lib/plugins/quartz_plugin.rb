@@ -42,7 +42,7 @@ class QuartzPlugin
 
 	@@version_major = 0
 	@@version_minor = 0
-	@@version_revision = 0
+	@@version_revision = 1
 
 	def get_version
 		"#{@@version_major}.#{@@version_minor}.#{@@version_revision}"

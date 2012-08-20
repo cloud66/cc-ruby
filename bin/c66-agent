@@ -15,62 +15,167 @@ begin
 	require 'eventmachine'
 	require 'faye'
 rescue LoadError => exc
-	warn "Cannot find required ruby gems needed to run this agent. Please install cloudblocks gem by running 'gem install cloudblocks'"
+	warn "Cannot find required ruby gems needed to run this agent. Please install the cloud66 gem by running 'gem install cloud66'"
 	warn exc
 	exit -1
 end
 
+#statuses
+ST_UNREGISTERED = 0
+ST_STOPPED = 1
+ST_STARTED = 2
+
 private
 
 def save_config
-	if !FileTest::directory?(@config_dir)
-		Dir.mkdir(@config_dir)
-	end
+	Dir.mkdir(@config_dir) if !FileTest::directory?(@config_dir)
 	File.open(@config_full, 'w+') { |out| YAML::dump({ 'api_key' => @api_key, 'agent_id' => @agent_id, 'secret_key' => @secret_key }, out) }
+end
+
+def load_config
+	if File.exists?(@config_full)
+		# config file present
+		config = YAML::load(File.open(@config_full))
+		@api_key = config['api_key']
+		@agent_id = config['agent_id']
+		@secret_key = config['secret_key']
+	else
+		puts "This agent is not registered. To register it, please use the 'register' command."
+		exit -1
+	end
+end
+
+def delete_config
+	File.delete(@config_full) if File.exists?(@config_full)	
+end
+
+def get_status
+	pid = get_pid
+	#check if the process is actually running
+	return ST_STARTED if pid != 0 && pid_process_running?(pid)
+	return ST_STOPPED if File.exists?(@config_full)  
+	return ST_UNREGISTERED
 end
 
 public
 
-@load_path = File.expand_path(File.join(File.dirname(__FILE__), '../lib/plugins'))
+def register
 
-def start
-	begin
-		@log.info "Attempting to start the CloudBlocks Agent"
-		puts "Attempting to start the CloudBlocks Agent..."
-
-		pid = get_pid
-		if pid != 0
-			#check if the process is actually running
-			if pid_process_running?(pid)
-				warn "The CloudBlocks Agent was already running. Use stop command to stop it or --help for more info"
-				exit -1
-			else
-				File.delete(@pid_full)
-			end
-		end
-
-		#check_version
-		load_plugins
-	rescue => exc
-		@log.error exc.message
+	if get_status == ST_STARTED
+		puts "This agent is currently started. To re-register it, please first stop it using the 'stop' command."
 		exit -1
 	end
 
+	puts 'Cloud 66 Agent Registration:'
+	# still no api key, we need to get it
+	if @api_key.empty?		
+		@api_key = ask('Please enter your API key. (you can find it at https://cloudblocks.co/me): ')
+		if @api_key.length != 32
+			puts 'Invalid API key'
+			exit -1
+		end
+	end
+	if @secret_key.empty?		
+		@secret_key = ask('Please enter your Secret Key (you can find it at https://cloudblocks.co/me): ')
+		if @secret_key.length != 32
+			puts 'Invalid Secret key'
+			exit -1
+		end
+	end
+
+	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :secret_key => @secret_key)
+	puts "Registering the Cloud 66 Agent..."
+
+	os_name = RUBY_PLATFORM
+	os_id = os_name.include?('darwin') ? 5 : 1
+	
+	timezone = Time.new.zone
+	agent = { :agent_type_id => os_id, :agent_name => @name, :agent_timezone => timezone, :extra => os_name, :stack_uid => @stack_uid }
+	result = @quartz.register(agent)
+
+	if result['ok']
+		@agent_id = result['uid']
+		puts "Registered successfully (and now ready to be started)!"
+		save_config
+	else
+		puts "Failed to register due to #{result['error']}"
+		exit -1
+	end
+end
+
+def unregister
+
+	stop if get_status == ST_STARTED
+	
+	load_config	
+	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
+	
+	puts "Unregistering the Cloud 66 Agent..."
+	@agent_id = ""
+	@quartz.unregister(@agent_id)
+	delete_config
+	puts "Unregistered successfully!"
+end
+
+def stop
+
+	if get_status == ST_STOPPED
+		puts "This agent was already stopped."
+		exit -1
+	end
+
+	load_config	
+	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
+	puts "Stopping the Cloud 66 Agent..."
+
+	begin		
+		@quartz.status(2)
+		EM.stop		
+	rescue
+	end
+
+	pid = get_pid
+	if pid != 0
+		begin
+			Process.kill('HUP', pid.to_i)
+		rescue
+		end
+		File.delete(@pid_full)
+	end
+	puts "Stopped successfully!"
+end
+
+
+def start
+
+	if get_status == ST_STARTED
+		puts "This agent is already started. To stop it, please use the 'stop' command."
+		exit -1
+	end
+
+	#we know it isn't running, so delete leftover pid file if it exists
+	File.delete(@pid_full) if get_pid != 0 		
+
+	load_config	
+	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
+	load_plugins
+
 	begin
 		@log.info @quartz.init(@version, plugin_meta_data)
-	rescue Exception => e
-		message = e.message
+	rescue => exc
+		message = exc.message
 		if message =~ /Couldn't find Agent with uid =/
 			@log.warn "This agent is no longer registered at the server. The old registration details have been removed from this agent. Please re-run the agent to re-register it."
 			puts "This agent is no longer registered at the server. The old registration details have been removed from this agent. Please re-run the agent to re-register it."
 			puts @config_full
 			File.delete(@config_full)
 		else
-			@log.error e.message
+			@log.error exc.message
 		end
 		exit -1
 	end
 
+	puts "Starting the Cloud 66 Agent..."
 	if @daemon_mode
 		pid = fork {
 			run
@@ -83,10 +188,10 @@ def start
 			Process.detach(pid)
 		rescue => exc
 			Process.kill('TERM', pid)
-			warn "Cannot start the CloudBlocks Agent: #{exc.message}"
+			warn "Cannot start the Cloud 66 Agent: #{exc.message}"
 		end
 
-		puts "The CloudBlocks Agent has been started!"
+		puts "Started successfully!"
 	else
 		run
 	end
@@ -95,58 +200,10 @@ def start
 	exit 0
 end
 
-def stop
-	pid = get_pid
-	@log.info "Attempting to stop the CloudBlocks Agent"
-	puts "Attempting to stop the CloudBlocks Agent..."
-
-	begin		
-		@quartz.status(2)
-		EM.stop		
-	rescue
-	end
-
-	if pid != 0
-		begin
-			Process.kill('HUP', pid.to_i)
-		rescue
-		end
-		File.delete(@pid_full)
-		puts "The CloudBlocks Agent has been stopped!"
-	else
-		warn "Nothing to do - the CloudBlocks Agent was not running"
-		exit -1
-	end
-end
-
-def register(stack_uid = nil)
-	puts "Registering the CloudBlocks Agent with #{@url} and API Key #{@api_key}..."
-	os_name = RUBY_PLATFORM
-	os_id = os_name.include?('darwin') ? 5 : 1
-	agent = { :agent_type_id => os_id, :agent_name => Socket.gethostname, :agent_timezone => Time.new.zone, :extra => os_name, :stack_uid => stack_uid }
-
-	result = @quartz.register(agent)
-	if result['ok']
-		@agent_id = result['uid']
-		puts "Registered with id #{@agent_id}"
-		save_config
-	else
-		puts "Failed to register due to #{result['error']}"
-		exit -1
-	end
-end
-
-def unregister
-	puts "Unregistering the CloudBlocks Agent #{@agent_id} with #{@url}..."
-	@agent_id = ""
-	@quartz.unregister(@agent_id)
-	save_config
-	puts "Unregistered successfully!"
-end
-
 private
 
 def load_plugins
+	@load_path = File.expand_path(File.join(File.dirname(__FILE__), '../lib/plugins'))
 	@log.info "Loading plugins from #{@load_path}"
 
 	files = Dir.glob("#{@load_path}/*.rb")
@@ -228,7 +285,7 @@ def run_plugin(plugin, message)
 		ok = result[:ok]
 		to_return = result[:message]
 	rescue => exc
-		@log.error "Failure during running plugin #{plugin} due to #{exc}"
+		@log.error "Failure during execution of plugin #{plugin} due to #{exc}"
 		ok = false
 		if result.nil?
 			to_return = exc.message
@@ -246,19 +303,6 @@ def run_plugin(plugin, message)
 		end
 	end
 end
-
-#def check_version
-#	begin
-#		result = @quartz.check_version
-#		if result['ok']
-#			latest = result['latest']
-#			@log.warn 'A newer version of the CloudBlocks Agent is available. Please update the cloudblocks gem. See http://help.cloudblocks.co for more info' if latest > @version
-#		end
-#	rescue => exc
-#		warn "Cannot connect to the CloudBlocks server"
-#		exit -1
-#	end
-#end
 
 def pulsate
 	@log.debug "Pulsate"
@@ -324,35 +368,27 @@ public
 @version = 1
 str_version = "0.0.#{@version}"
 
-config_file = 'cloudblocks.yaml'
-@pid_file = 'cb-agent.pid'
-@log_file = 'cb-agent.log'
-@config_dir = File.join(File.expand_path('~'), '.cloudblocks')
+config_file = 'cloud66.yaml'
+@pid_file = 'c66-agent.pid'
+@log_file = 'c66-agent.log'
+@config_dir = File.join(File.expand_path('~'), '.cloud66')
 @config_full = File.join(@config_dir, config_file)
-
-@cb_tmp_dir = '/tmp/cloudblocks'
+@cb_tmp_dir = '/tmp/cloud66'
 Dir.mkdir(@cb_tmp_dir) if !File.exists?(@cb_tmp_dir)
 
 @pid_full = File.join(@cb_tmp_dir, @pid_file)
 @log_full = File.join(@cb_tmp_dir, @log_file)
-
-@api_key = ''
-@faye_url = 'https://sockets.cloudblocks.co/push'
 commands = %w[register unregister start stop]
-
 @plugins = {}
-
-@url = nil
-@daemon_mode = true
 command = nil
-@agent_id = ''
-@realtime = true
+
+
 OptionParser.new do |opts|
 	opts.banner = 	<<-EOF
-	CloudBlocks Agent. v#{str_version} (c) 2012 CloudBlocks
+	Cloud 66 Agent. v#{str_version} (c) 2012 Cloud 66
 	For more information please visit http://cloudblocks.co
 
-	Usage: cb-agent [register|unregister|start|stop] [options]
+	Usage: c66-agent [register|unregister|start|stop] [options]
 
 	Options:
 	EOF
@@ -360,15 +396,12 @@ OptionParser.new do |opts|
 	opts.on('--url URL', 'Server URL') do |server_url|
 		@url = server_url
 	end
-	@url = @url || 'https://api.cloudblocks.co'
-
-	opts.on('--agent-id AGENTID', 'Agent id') do |v|
-		@agent_id = v
-	end
+	@url ||= 'https://api.cloudblocks.co'
 
 	opts.on('-d', '--no-daemon', 'Not in daemon mode') do |v|
 		@daemon_mode = false
 	end
+	@daemon_mode ||= true
 
 	opts.on('-p', '--pid PID', 'PID file path') do |v|
 		@pid_full = v
@@ -378,6 +411,11 @@ OptionParser.new do |opts|
 		@log_full = v
 	end
 
+	opts.on('-n', '--name NAME', 'Name of this agent') do |v|
+		@name = v
+	end
+	@name = Socket.gethostname if @name.nil? || @name.empty?
+
 	opts.on('-c', '--config CONFIG', 'Config file path') do |v|
 		@config_full = v
 	end
@@ -385,14 +423,17 @@ OptionParser.new do |opts|
 	opts.on('--sockets SOCKETS', 'Sockets URL') do |v|
 		@faye_url = v
 	end
+	@faye_url ||= 'https://sockets.cloudblocks.co/push'
 
 	opts.on('--api-key APIKEY', 'API key') do |v|
 		@api_key = v
 	end
+	@api_key ||= ''
 
 	opts.on('--secret-key SECRETKET', 'Secret Key') do |v|
 		@secret_key = v
 	end
+	@secret_key ||= ''
 
 	opts.on('--stack STACKIUD', 'Stack id') do |v|
 		@stack_uid = v
@@ -401,76 +442,37 @@ OptionParser.new do |opts|
 	opts.on('-r', '--realtime', 'Enable realtime notifications (default)') do |v|
 		@realtime = true
 	end
-
 	opts.on('-R', '--no-realtime', 'Disable realtime notifications') do |v|
 		@realtime = false
 	end
+	@realtime ||= true
 
 	opts.on_tail("-h", "--help", "Show this message") do
 		puts opts
 		puts <<-EOF
 
 		Commands:
-		register 			Register the CloudBlocks Agent
-		start 				Starts the CloudBlocks Agent as a deamon
-		stop 				Stops the CloudBlocks Agent daemon
-		unregister			Unregisters the CloudBlocks Agent
+		register 			Register the Cloud 66 Agent
+		start 				Starts the Cloud 66 Agent as a deamon
+		stop 				Stops the Cloud 66 Agent daemon
+		unregister			Unregisters the Cloud 66 Agent
 
 		EOF
 		exit 0
 	end
 end.parse!
 
-command = ARGV[0].downcase unless ARGV[0].nil?
-
-if @daemon_mode
-	@log = Logger.new(@log_full)
-else
-	@log = Logger.new(STDOUT)
-end
-
+#set logging output
+@log = @daemon_mode ? Logger.new(@log_full) : Logger.new(STDOUT)
 @log.level = Logger::DEBUG
 
-if (@api_key.empty? || @agent_id.empty?) && File.exists?(@config_full)
-	# config file present
-	config = YAML::load(File.open(@config_full))
-	@api_key = config['api_key']
-	@agent_id = config['agent_id']
-	@secret_key = config['secret_key']
-end
-
-# still no api key, we need to get it
-if @api_key.empty?
-	puts 'CloudBlocks Agent initial setup:'
-	@api_key = ask('Please enter your API key. (you can find it at https://cloudblocks.co/me): ')
-	if @api_key.length != 32
-		puts 'Invalid API key'
-		exit -1
-	end
-
-	@secret_key = ask('Please enter your Secret Key (you can find it at https://cloudblocks.co/me): ')
-	if @secret_key.length != 32
-		puts 'Invalid Secret key'
-		exit -1
-	end
-end
-
-# no agent id?
-if @agent_id.empty?
-	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :secret_key => @secret_key)
-	register(@stack_uid) 
-	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
-	start
-end
-
+#return status information
+command = ARGV[0].downcase unless ARGV[0].nil?
 if command.nil? || command.empty?
-	pid = get_pid
-	#check if the process is actually running
-	if pid != 0 && pid_process_running?(pid)
-		puts "The CloudBlocks Agent is currently running. Use 'cb-agent stop' to stop it or --help for more info"
-		exit -1
-	end
-	puts "The CloudBlocks Agent is not currently running. Use 'cb-agent start' to start it or --help for more information"
+	status = get_status
+	puts "Started (use --help for commands)" if status == ST_STARTED
+	puts "Stopped (use --help for commands)" if status == ST_STOPPED
+	puts "Unregistered (use --help for commands)" if status == ST_UNREGISTERED
 	exit -1
 end
 
@@ -479,11 +481,11 @@ unless commands.include?(command)
 	exit -1
 end
 
-if (@agent_id.nil? || @agent_id.empty? || @agent_id.empty? || @secret_key.empty?) && command != 'register'
-	puts 'No CloudBlocks Agent id found. Have you registered it yet? Use --help for more information'
+begin
+	send(command)
+rescue => exc
+	@log.error exc.message
+	puts "An error has occurred: #{exc.message}"
 	exit -1
 end
 
-@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
-
-send(command)

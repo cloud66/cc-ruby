@@ -25,11 +25,6 @@ class CloudQuartz
 		process(self.class.delete("/agent/#{@agent_id}.json", :headers => ClientAuth.build_headers(@api_key, @secret_key)))
 	end
 
-	#TODO: Is this deprecated now?
-	#def check_version
-	#	self.class.get("/agent/version", :headers => ClientAuth.build_headers(@api_key, @secret_key))
-	#end
-
 	def post_results(job_id, data)
 		process(self.class.post("/job/#{job_id}/complete.json", { :headers => ClientAuth.build_headers(@api_key, @secret_key).merge({'Content-Type' => 'application/json'}), :body => data.to_json } ))
 	end
