@@ -49,6 +49,32 @@ def delete_config
 	File.delete(@config_full) if File.exists?(@config_full)	
 end
 
+def get_pid
+	if File.exists?(@pid_full)
+		file = File.new(@pid_full, "r")
+		pid = file.read
+		file.close
+		pid
+	else
+		0
+	end
+end
+
+def delete_pid
+	File.delete(@pid_full) if get_pid != 0
+end
+
+
+def pid_process_running?(pid)
+	begin
+		pid_number = pid.to_i
+		Process.getpgid(pid_number)
+		true
+	rescue Errno::ESRCH
+		false
+	end
+end
+
 def get_status
 	pid = get_pid
 	#check if the process is actually running
@@ -117,17 +143,23 @@ def unregister
 	puts "Unregistered successfully!"
 end
 
-def stop
+def stop(signalCatch = false)
 
-	if get_status == ST_STOPPED
+	#signalCatch indicates a TERM or INT trap (where the app is already stopped, but server not told)
+	if !signalCatch && get_status == ST_STOPPED
 		puts "This agent was already stopped."
+
+		#delete the pid file just in case its hanging around
+		delete_pid
+		
 		exit -1
 	end
 
 	load_config	
 	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
 	puts "Stopping the Cloud 66 Agent..."
-
+	@log.debug "Stopping the Cloud 66 Agent..."
+	
 	begin		
 		@quartz.status(2)
 		EM.stop		
@@ -140,9 +172,11 @@ def stop
 			Process.kill('HUP', pid.to_i)
 		rescue
 		end
-		File.delete(@pid_full)
 	end
+	delete_pid
+
 	puts "Stopped successfully!"
+	@log.debug "Stopped successfully!"
 end
 
 
@@ -154,7 +188,7 @@ def start
 	end
 
 	#we know it isn't running, so delete leftover pid file if it exists
-	File.delete(@pid_full) if get_pid != 0 		
+	delete_pid 		
 
 	load_config	
 	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
@@ -315,13 +349,19 @@ end
 
 def run
 	EM.run{
-		Signal.trap('INT') { stop }
-		Signal.trap('TERM'){ stop }
+		Signal.trap('INT') { @log.debug("trapped INT signal"); stop(true) }
+		Signal.trap('TERM'){ @log.debug("trapped TERM signal"); stop(true) }
 
 	    # pulse
 	    pulsate
-		EM.add_periodic_timer 60 do  # 1 minute
-			pulsate
+		begin 
+			EM.add_periodic_timer 60 do  # 1 minute
+				pulsate
+			end
+		rescue => exc
+			@log.error "Unable to add EM timer due to: #{exc.message}"
+			@log.error "#{exc.backtrace}"
+			exit -1
 		end
 
 		if @realtime
@@ -340,27 +380,6 @@ def run
 			end
 		end
 	}
-end
-
-def get_pid
-	if File.exists?(@pid_full)
-		file = File.new(@pid_full, "r")
-		pid = file.read
-		file.close
-		pid
-	else
-		0
-	end
-end
-
-def pid_process_running?(pid)
-	begin
-		pid_number = pid.to_i
-		Process.getpgid(pid_number)
-		true
-	rescue Errno::ESRCH
-		false
-	end
 end
 
 public
