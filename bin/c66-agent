@@ -83,16 +83,27 @@ def get_status
 	return ST_UNREGISTERED
 end
 
+#http://stackoverflow.com/questions/2279210/timer-in-ruby-performance
+#def repeat_every(interval)
+#	Thread.new do
+#		loop do
+#			start_time = Time.now
+#			yield
+#			elapsed = Time.now - start_time
+#			sleep([interval - elapsed, 0].max)
+#		end
+#	end
+#end
+
 public
 
 def register
 
-	if get_status == ST_STARTED
-		puts "This agent is currently started. To re-register it, please first stop it using the 'stop' command."
-		exit -1
+	if get_status != ST_UNREGISTERED
+		unregister
 	end
 
-	puts 'Cloud 66 Agent Registration:'
+	puts 'Cloud 66 Agent Registration:' if @api_key.empty? || @secret_key.empty?
 	# still no api key, we need to get it
 	if @api_key.empty?		
 		@api_key = ask('Please enter your API key. (you can find it at https://cloudblocks.co/me): ')
@@ -354,8 +365,12 @@ def run
 
 	    # pulse
 	    pulsate
-		begin 
-			EM.add_periodic_timer 60 do  # 1 minute
+	    begin 
+
+	    	#@pulsateThread = repeat_every(60) do # 1 minute
+	    	#	pulsate
+	    	#end  
+			EM.add_periodic_timer 60 do  
 				pulsate
 			end
 		rescue => exc
@@ -365,7 +380,7 @@ def run
 		end
 
 		if @realtime
-			@log.info "Listening to realtime nofitifications from /quartz/agents/#{@agent_id} on #{@faye_url}" 
+			@log.info "Listening to realtime notifications from /quartz/agents/#{@agent_id} on #{@faye_url}" 
 
 			client = Faye::Client.new(@faye_url)
 			client.add_extension(ClientAuth.new(@api_key, @secret_key))
@@ -375,6 +390,9 @@ def run
 			end
 		else
 			@log.info "Checking for new jobs every 5 seconds"
+			#@jobCheckThread = repeat_every(5) do # 5 secs
+			#	get_job
+			#end  
 			EM.add_periodic_timer 5 do
 				get_job
 			end
