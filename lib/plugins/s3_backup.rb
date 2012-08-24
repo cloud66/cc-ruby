@@ -125,11 +125,11 @@ class S3Backup < QuartzPlugin
 		s3_directory = directory.files.map {|f| f.key }
 
 		all_remote_files = s3_directory.select {|m| m =~ remote_path_match}.map {|m| remove_initial_slash(m.gsub(remote_path_match, ''))}
-		archive_regex = /(?<folder>^Archive_CloudBlocks \(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\)\/)/
+		archive_regex = /(?<folder>^Archive_Cloud66 \(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\)\/)/
 		non_archive_files = all_remote_files.reject { |m| m =~ archive_regex }
 		archived_files = all_remote_files.select { |m| m =~ archive_regex }
 
-		new_archive_folder = "Archive_CloudBlocks (#{Time.now.strftime("%Y-%m-%d %H:%M:%S")})/"
+		new_archive_folder = "Archive_Cloud66 (#{Time.now.strftime("%Y-%m-%d %H:%M:%S")})/"
 		
 		#copy all non-archive files to new backup folder
 		non_archive_files.each do |relative_file|

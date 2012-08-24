@@ -87,6 +87,6 @@ if [ "$DIST" = "Ubuntu" ]; then
 		sudo apt-get install libxslt1-dev libxml2-dev g++ make libssl-dev ruby1.9.1 ruby1.9.1-dev -y
 fi
 
-sudo gem install cloudblocks --no-ri --no-rdoc
+sudo gem install cloud66 --no-ri --no-rdoc
 
 quartz --api-key API-KEY register

@@ -106,14 +106,14 @@ def register
 	puts 'Cloud 66 Agent Registration:' if @api_key.empty? || @secret_key.empty?
 	# still no api key, we need to get it
 	if @api_key.empty?		
-		@api_key = ask('Please enter your API key. (you can find it at https://cloudblocks.co/me): ')
+		@api_key = ask('Please enter your API key. (you can find it at https://cloud66.com/me): ')
 		if @api_key.length != 32
 			puts 'Invalid API key'
 			exit -1
 		end
 	end
 	if @secret_key.empty?		
-		@secret_key = ask('Please enter your Secret Key (you can find it at https://cloudblocks.co/me): ')
+		@secret_key = ask('Please enter your Secret Key (you can find it at https://cloud66.com/me): ')
 		if @secret_key.length != 32
 			puts 'Invalid Secret key'
 			exit -1
@@ -423,7 +423,7 @@ command = nil
 OptionParser.new do |opts|
 	opts.banner = 	<<-EOF
 	Cloud 66 Agent. v#{str_version} (c) 2012 Cloud 66
-	For more information please visit http://cloudblocks.co
+	For more information please visit http://cloud66.com
 
 	Usage: c66-agent [register|unregister|start|stop] [options]
 
@@ -433,7 +433,7 @@ OptionParser.new do |opts|
 	opts.on('--url URL', 'Server URL') do |server_url|
 		@url = server_url
 	end
-	@url ||= 'https://api.cloudblocks.co'
+	@url ||= 'https://api.cloud66.com'
 
 	opts.on('-d', '--no-daemon', 'Not in daemon mode') do |v|
 		@daemon_mode = false
@@ -460,7 +460,7 @@ OptionParser.new do |opts|
 	opts.on('--sockets SOCKETS', 'Sockets URL') do |v|
 		@faye_url = v
 	end
-	@faye_url ||= 'https://sockets.cloudblocks.co/push'
+	@faye_url ||= 'https://sockets.cloud66.com/push'
 
 	opts.on('--api-key APIKEY', 'API key') do |v|
 		@api_key = v

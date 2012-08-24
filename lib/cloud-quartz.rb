@@ -10,7 +10,7 @@ class CloudQuartz
 		@api_key = options[:api_key]
 		@agent_id = options[:agent_id]
 		@secret_key = options[:secret_key]
-		self.class.base_uri options[:url] || 'https://api.cloudblocks.co'
+		self.class.base_uri options[:url] || 'https://api.cloud66.com'
 	end
 
 	def get_job
