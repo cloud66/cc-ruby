@@ -14,7 +14,7 @@ class Shell < QuartzPlugin
 		@log.debug "Running with #{message}"
 		payload = payload(message)
 		command = payload['command']
-		@log.info "Shell command '#{command}"
+		@log.info "Shell command '#{command}'"
 
 		begin
 			result = run_shell("#{command}")

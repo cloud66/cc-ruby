@@ -17,9 +17,10 @@ task :run, :plugin do |t, args|
 		classname = plugin.split('_').collect{ |part| part.capitalize }.join
 		clazz = Kernel.const_get(classname)
 		instance = clazz.new(@log, { :api_key => "", :agent_id => "" })
+		@log.debug "Test class loaded: #{classname}"
 
 		message = payload
-		message = { 'payload' => message.to_json, 'job_name' => 'Test Runner'}
+		message = { 'payload' => payload, 'job_name' => 'Test Runner'}
 		instance.run(message)
 	rescue => exc
 		@log.error "Run failed due to #{exc}"

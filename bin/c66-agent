@@ -100,7 +100,10 @@ public
 def register
 
 	if get_status != ST_UNREGISTERED
-		unregister
+		begin
+			unregister
+		rescue
+		end
 	end
 
 	puts 'Cloud 66 Agent Registration:' if @api_key.empty? || @secret_key.empty?
@@ -141,17 +144,21 @@ def register
 end
 
 def unregister
+	begin
 
-	stop if get_status == ST_STARTED
-	
-	load_config	
-	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
-	
-	puts "Unregistering the Cloud 66 Agent..."
-	@agent_id = ""
-	@quartz.unregister(@agent_id)
-	delete_config
-	puts "Unregistered successfully!"
+		stop if get_status == ST_STARTED
+		
+		load_config	
+		@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
+		
+		puts "Unregistering the Cloud 66 Agent..."
+		@agent_id = ""
+		@quartz.unregister(@agent_id)
+		delete_config
+		puts "Unregistered successfully!"
+
+	rescue
+	end
 end
 
 def stop(signalCatch = false)
@@ -370,26 +377,30 @@ def run
 	    	#@pulsateThread = repeat_every(60) do # 1 minute
 	    	#	pulsate
 	    	#end  
-			EM.add_periodic_timer 60 do  
-				pulsate
-			end
-		rescue => exc
-			@log.error "Unable to add EM timer due to: #{exc.message}"
-			@log.error "#{exc.backtrace}"
-			exit -1
-		end
+	    	EM.add_periodic_timer 60 do  
+	    		pulsate
+	    	end
+	    rescue => exc
+	    	@log.error "Unable to add EM timer due to: #{exc.message}"
+	    	@log.error "#{exc.backtrace}"
+	    	exit -1
+	    end
 
-		if @realtime
-			@log.info "Listening to realtime notifications from /quartz/agents/#{@agent_id} on #{@faye_url}" 
+	    if @realtime
 
-			client = Faye::Client.new(@faye_url)
-			client.add_extension(ClientAuth.new(@api_key, @secret_key))
-			client.subscribe("/user/#{@api_key}/quartz/agents/#{@agent_id}") do |message|
-				@log.info "Got realtime notice for a new job #{message}"
-				get_job
-			end
-		else
-			@log.info "Checking for new jobs every 5 seconds"
+	    	channel = "/user/#{@api_key}/agent/#{@agent_id}"
+	    	@log.info "Listening to realtime notifications from '#{channel}' on '#{@faye_url}'" 
+
+	    	client = Faye::Client.new(@faye_url)
+	    	client.add_extension(ClientAuth.new(@api_key, @secret_key))
+	    	client.subscribe("/user/#{@api_key}/agent/#{@agent_id}") do |message|
+	    		if message['action'] == 'new_job'
+	    			@log.info "Got realtime notice for a new job #{message}"
+	    			get_job
+	    		end
+	    	end
+	    else
+	    	@log.info "Checking for new jobs every 5 seconds"
 			#@jobCheckThread = repeat_every(5) do # 5 secs
 			#	get_job
 			#end  

@@ -16,16 +16,10 @@ class QuartzPlugin
 	end
 
 	def payload(message)
-		raw_payload = message['payload']
-		@log.debug "Payload #{raw_payload}"
-		parsed_payload = JSON.parse(raw_payload) unless raw_payload.nil?
-		@log.debug "Parsed payload #{parsed_payload}"
-
-		v = parsed_payload
+		v = message['payload']
+		@log.debug "Payload received: #{v}"
 		v = v.merge({'job_name' => message['job_name']})
-
-		@log.debug "Payload #{v}"
-
+		@log.debug "Payload used: #{v}"
 		v
 	end
 
