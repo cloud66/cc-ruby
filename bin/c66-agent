@@ -397,6 +397,11 @@ def run
 	    		if message['action'] == 'new_job'
 	    			@log.info "Got realtime notice for a new job #{message}"
 	    			get_job
+	    		elsif message['action'] == 'unregister'
+	    			@log.info "Got unregister notice #{message}"
+	    			delete_config
+	    			delete_pid
+	    			EM.stop
 	    		end
 	    	end
 	    else
