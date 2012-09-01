@@ -265,12 +265,12 @@ def start
 
 	puts "Starting the Cloud 66 Agent..."
 	if @daemon_mode
-		pid = daemonize
+		daemonize
+		pid = Process.pid
 		begin
 			file = File.new(@pid_full, "w")
 			file.write(pid)
 			file.close
-			Process.detach(pid)
 		rescue => exc
 			Process.kill('TERM', pid)
 			warn "Cannot start the Cloud 66 Agent: #{exc.message}"

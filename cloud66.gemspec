@@ -2,8 +2,8 @@ require 'rake'
 
 Gem::Specification.new do |s|
   s.name        = 'cloud66'
-  s.version     = '0.0.5.beta2'
-  s.date        = '2012-08-31'
+  s.version     = '0.0.5.beta3'
+  s.date        = '2012-09-01'
   s.summary     = "Cloud 66 Server Agent"
   s.description = "See http://cloud66.com for more info"
   s.authors     = ["Cloud 66"]
