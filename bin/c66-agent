@@ -27,6 +27,55 @@ ST_STARTED = 2
 
 private
 
+def safefork
+	tryagain = true
+
+	while tryagain
+		tryagain = false
+		begin
+		if pid = fork
+			return pid
+		end
+		rescue Errno::EWOULDBLOCK
+			sleep 5
+			tryagain = true
+		end
+	end
+end
+
+def daemonize(oldmode=0, closefd=false)
+	srand # Split rand streams between spawning and daemonized process
+	safefork and exit # Fork and exit from the parent
+
+	# Detach from the controlling terminal
+	unless sess_id = Process.setsid
+	  raise 'Cannot detach from controlled terminal'
+	end
+
+	# Prevent the possibility of acquiring a controlling terminal
+	if oldmode.zero?
+	  trap 'SIGHUP', 'IGNORE'
+	  exit if pid = safefork
+	end
+
+	Dir.chdir "/"   # Release old working directory
+	File.umask 0000 # Insure sensible umask
+
+	if closefd
+	  # Make sure all file descriptors are closed
+	  ObjectSpace.each_object(IO) do |io|
+	    unless [STDIN, STDOUT, STDERR].include?(io)
+	      io.close rescue nil
+	    end
+	  end
+	end
+
+	STDIN.reopen "/dev/null"       # Free file descriptors and
+	STDOUT.reopen "/dev/null", "a" # point them somewhere sensible
+	STDERR.reopen STDOUT           # STDOUT/STDERR should go to a logfile
+	return oldmode ? sess_id : 0   # Return value is mostly irrelevant
+end
+
 def save_config
 	Dir.mkdir(@config_dir) if !FileTest::directory?(@config_dir)
 	File.open(@config_full, 'w+') { |out| YAML::dump({ 'api_key' => @api_key, 'agent_id' => @agent_id, 'secret_key' => @secret_key }, out) }
@@ -64,7 +113,6 @@ def delete_pid
 	File.delete(@pid_full) if get_pid != 0
 end
 
-
 def pid_process_running?(pid)
 	begin
 		pid_number = pid.to_i
@@ -82,18 +130,6 @@ def get_status
 	return ST_STOPPED if File.exists?(@config_full)  
 	return ST_UNREGISTERED
 end
-
-#http://stackoverflow.com/questions/2279210/timer-in-ruby-performance
-#def repeat_every(interval)
-#	Thread.new do
-#		loop do
-#			start_time = Time.now
-#			yield
-#			elapsed = Time.now - start_time
-#			sleep([interval - elapsed, 0].max)
-#		end
-#	end
-#end
 
 public
 
@@ -229,10 +265,7 @@ def start
 
 	puts "Starting the Cloud 66 Agent..."
 	if @daemon_mode
-		pid = fork {
-			run
-		}
-
+		pid = daemonize
 		begin
 			file = File.new(@pid_full, "w")
 			file.write(pid)
@@ -243,7 +276,7 @@ def start
 			warn "Cannot start the Cloud 66 Agent: #{exc.message}"
 		end
 
-		puts "Started successfully!"
+		run
 	else
 		run
 	end
@@ -374,9 +407,6 @@ def run
 	    pulsate
 	    begin 
 
-	    	#@pulsateThread = repeat_every(60) do # 1 minute
-	    	#	pulsate
-	    	#end  
 	    	EM.add_periodic_timer 60 do  
 	    		pulsate
 	    	end
@@ -406,9 +436,6 @@ def run
 	    	end
 	    else
 	    	@log.info "Checking for new jobs every 5 seconds"
-			#@jobCheckThread = repeat_every(5) do # 5 secs
-			#	get_job
-			#end  
 			EM.add_periodic_timer 5 do
 				get_job
 			end
