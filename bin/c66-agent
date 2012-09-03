@@ -223,7 +223,7 @@ def stop(signalCatch = false)
 	pid = get_pid
 	if pid != 0
 		begin
-			Process.kill('HUP', pid.to_i)
+			Process.kill('TERM', pid.to_i)
 		rescue
 		end
 	end
