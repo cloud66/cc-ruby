@@ -190,10 +190,11 @@ def unregister
 		puts "Unregistering the Cloud 66 Agent..."
 		@agent_id = ""
 		@quartz.unregister(@agent_id)
-		delete_config
-		puts "Unregistered successfully!"
 
 	rescue
+	ensure
+		delete_config
+		puts "Unregistered successfully!"
 	end
 end
 
