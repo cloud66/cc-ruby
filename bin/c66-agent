@@ -166,7 +166,7 @@ def register
 	os_id = os_name.include?('darwin') ? 5 : 1
 	
 	timezone = Time.new.zone
-	agent = { :agent_type_id => os_id, :agent_name => @name, :agent_timezone => timezone, :extra => os_name, :stack_uid => @stack_uid }
+	agent = { :agent_type_id => os_id, :agent_name => @name, :agent_timezone => timezone, :extra => os_name, :server_uid => @server_uid }
 	result = @quartz.register(agent)
 
 	if result['ok']
@@ -517,8 +517,8 @@ OptionParser.new do |opts|
 	end
 	@secret_key ||= ''
 
-	opts.on('--stack STACKIUD', 'Stack id') do |v|
-		@stack_uid = v
+	opts.on('--server SERVERUID', 'Server id') do |v|
+		@server_uid = v
 	end
 
 	opts.on('-r', '--realtime', 'Enable realtime notifications (default)') do |v|
