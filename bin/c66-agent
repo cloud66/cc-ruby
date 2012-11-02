@@ -2,7 +2,6 @@
 
 require 'yaml'
 require File.expand_path("../../lib/cloud-quartz", __FILE__)
-require File.expand_path("../../lib/client_auth", __FILE__)
 require 'optparse'
 require 'socket'
 require 'logger'
@@ -33,9 +32,9 @@ def safefork
 	while tryagain
 		tryagain = false
 		begin
-		if pid = fork
-			return pid
-		end
+			if pid = fork
+				return pid
+			end
 		rescue Errno::EWOULDBLOCK
 			sleep 5
 			tryagain = true
@@ -49,31 +48,31 @@ def daemonize(oldmode=0, closefd=false)
 
 	# Detach from the controlling terminal
 	unless sess_id = Process.setsid
-	  raise 'Cannot detach from controlled terminal'
+		raise 'Cannot detach from controlled terminal'
 	end
 
 	# Prevent the possibility of acquiring a controlling terminal
 	if oldmode.zero?
-	  trap 'SIGHUP', 'IGNORE'
-	  exit if pid = safefork
+		trap 'SIGHUP', 'IGNORE'
+		exit if pid = safefork
 	end
 
-	Dir.chdir "/"   # Release old working directory
+	Dir.chdir "/" # Release old working directory
 	File.umask 0000 # Insure sensible umask
 
 	if closefd
-	  # Make sure all file descriptors are closed
-	  ObjectSpace.each_object(IO) do |io|
-	    unless [STDIN, STDOUT, STDERR].include?(io)
-	      io.close rescue nil
-	    end
-	  end
+		# Make sure all file descriptors are closed
+		ObjectSpace.each_object(IO) do |io|
+			unless [STDIN, STDOUT, STDERR].include?(io)
+				io.close rescue nil
+			end
+		end
 	end
 
-	STDIN.reopen "/dev/null"       # Free file descriptors and
+	STDIN.reopen "/dev/null" # Free file descriptors and
 	STDOUT.reopen "/dev/null", "a" # point them somewhere sensible
-	STDERR.reopen STDOUT           # STDOUT/STDERR should go to a logfile
-	return oldmode ? sess_id : 0   # Return value is mostly irrelevant
+	STDERR.reopen STDOUT # STDOUT/STDERR should go to a logfile
+	return oldmode ? sess_id : 0 # Return value is mostly irrelevant
 end
 
 def save_config
@@ -95,7 +94,7 @@ def load_config
 end
 
 def delete_config
-	File.delete(@config_full) if File.exists?(@config_full)	
+	File.delete(@config_full) if File.exists?(@config_full)
 end
 
 def get_pid
@@ -127,7 +126,7 @@ def get_status
 	pid = get_pid
 	#check if the process is actually running
 	return ST_STARTED if pid != 0 && pid_process_running?(pid)
-	return ST_STOPPED if File.exists?(@config_full)  
+	return ST_STOPPED if File.exists?(@config_full)
 	return ST_UNREGISTERED
 end
 
@@ -144,14 +143,14 @@ def register
 
 	puts 'Cloud 66 Agent Registration:' if @api_key.empty? || @secret_key.empty?
 	# still no api key, we need to get it
-	if @api_key.empty?		
+	if @api_key.empty?
 		@api_key = ask('Please enter your API key. (you can find it at https://cloud66.com/me): ')
 		if @api_key.length != 32
 			puts 'Invalid API key'
 			exit -1
 		end
 	end
-	if @secret_key.empty?		
+	if @secret_key.empty?
 		@secret_key = ask('Please enter your Secret Key (you can find it at https://cloud66.com/me): ')
 		if @secret_key.length != 32
 			puts 'Invalid Secret key'
@@ -164,7 +163,7 @@ def register
 
 	os_name = RUBY_PLATFORM
 	os_id = os_name.include?('darwin') ? 5 : 1
-	
+
 	timezone = Time.new.zone
 	agent = { :agent_type_id => os_id, :agent_name => @name, :agent_timezone => timezone, :extra => os_name, :stack_uid => @stack_uid }
 	result = @quartz.register(agent)
@@ -183,10 +182,10 @@ def unregister
 	begin
 
 		stop if get_status == ST_STARTED
-		
-		load_config	
+
+		load_config
 		@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
-		
+
 		puts "Unregistering the Cloud 66 Agent..."
 		@agent_id = ""
 		@quartz.unregister(@agent_id)
@@ -206,18 +205,18 @@ def stop(signalCatch = false)
 
 		#delete the pid file just in case its hanging around
 		delete_pid
-		
+
 		exit -1
 	end
 
-	load_config	
+	load_config
 	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
 	puts "Stopping the Cloud 66 Agent..."
 	@log.debug "Stopping the Cloud 66 Agent..."
-	
-	begin		
+
+	begin
 		@quartz.status(2)
-		EM.stop		
+		EM.stop
 	rescue
 	end
 
@@ -243,9 +242,9 @@ def start
 	end
 
 	#we know it isn't running, so delete leftover pid file if it exists
-	delete_pid 		
+	delete_pid
 
-	load_config	
+	load_config
 	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
 	load_plugins
 
@@ -298,7 +297,7 @@ def load_plugins
 
 			# is it a valid plugin?
 			require "#{file}"
-			classname = File.basename(file, '.rb').split('_').collect{ |part| part.capitalize }.join
+			classname = File.basename(file, '.rb').split('_').collect { |part| part.capitalize }.join
 			begin
 				clazz = Kernel.const_get(classname)
 				if clazz.ancestors[1].name == 'QuartzPlugin'
@@ -309,7 +308,7 @@ def load_plugins
 				else
 					@log.error "Invalid plugin found #{clazz}"
 				end
-			rescue 
+			rescue
 			end
 		end
 	end
@@ -350,7 +349,7 @@ def get_job
 					data = { :run_start => Time.now.utc.to_i, :run_end => Time.now.utc.to_i, :agent_uid => @agent_id, :ok => false, :fail_reason => "Requested plugin not found. Does this agent support this job type?" }
 					@quartz.post_results(job_id, data)
 				end
-			#else
+				#else
 				#dropping this due to proliferation of log output
 				#@log.debug 'No jobs to run'
 			end
@@ -377,7 +376,7 @@ def run_plugin(plugin, message)
 		if result.nil?
 			to_return = exc.message
 		else
-			to_return = result[:message] 
+			to_return = result[:message]
 		end
 	ensure
 		data = { :run_start => run_start, :run_end => Time.now.utc.to_i, :agent_uid => @agent_id, :ok => ok }
@@ -394,50 +393,46 @@ end
 def pulsate
 	@log.debug "Pulsate"
 	begin
-		@quartz.pulse 
+		@quartz.pulse
 	rescue => exc
 		@log.error "Failed to pulsate due to #{exc.message}"
 	end
 end
 
 def run
-	EM.run{
+	EM.run {
 		Signal.trap('INT') { @log.debug("trapped INT signal"); stop(true) }
-		Signal.trap('TERM'){ @log.debug("trapped TERM signal"); stop(true) }
+		Signal.trap('TERM') { @log.debug("trapped TERM signal"); stop(true) }
 
-	    # pulse
-	    pulsate
-	    begin 
+		# pulse
+		pulsate
+		begin
 
-	    	EM.add_periodic_timer 60 do  
-	    		pulsate
-	    	end
-	    rescue => exc
-	    	@log.error "Unable to add EM timer due to: #{exc.message}"
-	    	@log.error "#{exc.backtrace}"
-	    	exit -1
-	    end
+			EM.add_periodic_timer 60 do
+				pulsate
+			end
+		rescue => exc
+			@log.error "Unable to add EM timer due to: #{exc.message}"
+			@log.error "#{exc.backtrace}"
+			exit -1
+		end
 
-	    if @realtime
+		if @realtime
 
-	    	channel = "/user/#{@api_key}/agent/#{@agent_id}"
-	    	@log.info "Listening to realtime notifications from '#{channel}' on '#{@faye_url}'" 
-
-	    	client = Faye::Client.new(@faye_url)
-	    	client.add_extension(ClientAuth.new(@api_key, @secret_key))
-	    	client.subscribe("/user/#{@api_key}/agent/#{@agent_id}") do |message|
-	    		if message['action'] == 'new_job'
-	    			@log.info "Got realtime notice for a new job #{message}"
-	    			get_job
-	    		elsif message['action'] == 'unregister'
-	    			@log.info "Got unregister notice #{message}"
-	    			delete_config
-	    			delete_pid
-	    			EM.stop
-	    		end
-	    	end
-	    else
-	    	@log.info "Checking for new jobs every 5 seconds"
+			channel = "/user/#{@api_key}/agent/#{@agent_id}/newjob"
+			@log.info "Listening to realtime notifications from '#{channel}' on '#{@faye_url}'"
+			client = Faye::Client.new(@faye_url)
+			client.subscribe(channel) do |message|
+				@log.info "Got realtime notice for a new job #{message}"
+				get_job
+			end
+			#TODO: handle this within pulse
+			#@log.info "Got unregister notice #{message}"
+			#delete_config
+			#delete_pid
+			#EM.stop
+		else
+			@log.info "Checking for new jobs every 5 seconds"
 			EM.add_periodic_timer 5 do
 				get_job
 			end
@@ -461,12 +456,12 @@ Dir.mkdir(@cb_tmp_dir) if !File.exists?(@cb_tmp_dir)
 @pid_full = File.join(@cb_tmp_dir, @pid_file)
 @log_full = File.join(@cb_tmp_dir, @log_file)
 commands = %w[register unregister start stop]
-@plugins = {}
+@plugins = { }
 command = nil
 
 
 OptionParser.new do |opts|
-	opts.banner = 	<<-EOF
+	opts.banner = <<-EOF
 	Cloud 66 Agent. v#{str_version} (c) 2012 Cloud 66
 	For more information please visit http://cloud66.com
 
