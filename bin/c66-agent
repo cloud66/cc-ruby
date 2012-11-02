@@ -418,19 +418,13 @@ def run
 		end
 
 		if @realtime
-
-			channel = "/user/#{@api_key}/agent/#{@agent_id}/newjob"
+			channel = "/agent_user/#{@api_key}/agent/#{@agent_id}/newjob"
 			@log.info "Listening to realtime notifications from '#{channel}' on '#{@faye_url}'"
 			client = Faye::Client.new(@faye_url)
 			client.subscribe(channel) do |message|
 				@log.info "Got realtime notice for a new job #{message}"
 				get_job
 			end
-			#TODO: handle this within pulse
-			#@log.info "Got unregister notice #{message}"
-			#delete_config
-			#delete_pid
-			#EM.stop
 		else
 			@log.info "Checking for new jobs every 5 seconds"
 			EM.add_periodic_timer 5 do
