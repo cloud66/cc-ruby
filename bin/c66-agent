@@ -2,6 +2,7 @@
 
 require 'yaml'
 require File.expand_path("../../lib/cloud-quartz", __FILE__)
+require File.expand_path('../../lib/version')
 require 'optparse'
 require 'socket'
 require 'logger'
