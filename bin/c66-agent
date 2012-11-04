@@ -89,9 +89,6 @@ def load_config
 		@api_key = config['api_key']
 		@agent_id = config['agent_id']
 		@secret_key = config['secret_key']
-	else
-		puts "This agent is not registered. To register it, please use the 'register' command."
-		exit -1
 	end
 end
 
@@ -210,18 +207,19 @@ def stop(signalCatch = false)
 		exit -1
 	end
 
+	#unregister the agent on the server
 	begin
 		load_config
 		@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
 		puts "Stopping the Cloud 66 Agent..."
 		@log.debug "Stopping the Cloud 66 Agent..."
+		@quartz.status(2)
+	rescue
+	end
 
-		begin
-			@quartz.status(2)
-		rescue
-		end
-	ensure
+	begin
 		EM.stop
+	rescue
 	end
 
 	pid = get_pid
@@ -541,9 +539,9 @@ end.parse!
 command = ARGV[0].downcase unless ARGV[0].nil?
 if command.nil? || command.empty?
 	status = get_status
-	puts "Started (use --help for commands)" if status == ST_STARTED
-	puts "Stopped (use --help for commands)" if status == ST_STOPPED
-	puts "Unregistered (use --help for commands)" if status == ST_UNREGISTERED
+	puts "v#{Agent::Version.current} Started (use --help for commands)" if status == ST_STARTED
+	puts "v#{Agent::Version.current} Stopped (use --help for commands)" if status == ST_STOPPED
+	puts "v#{Agent::Version.current} Unregistered (use --help for commands)" if status == ST_UNREGISTERED
 	exit -1
 end
 
