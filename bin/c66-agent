@@ -180,7 +180,6 @@ end
 
 def unregister
 	begin
-
 		stop if get_status == ST_STARTED
 
 		load_config
@@ -233,7 +232,6 @@ def stop(signalCatch = false)
 	@log.debug "Stopped successfully!"
 end
 
-
 def start
 
 	if get_status == ST_STARTED
@@ -249,7 +247,7 @@ def start
 	load_plugins
 
 	begin
-		@log.info @quartz.init(@version, plugin_meta_data)
+		@log.info @quartz.init(Agent::Version.current, plugin_meta_data)
 	rescue => exc
 		message = exc.message
 		if message =~ /Couldn't find Agent with uid =/
@@ -436,9 +434,6 @@ end
 
 public
 
-@version = 1
-str_version = "0.0.#{@version}"
-
 config_file = 'cloud66.yaml'
 @pid_file = 'c66-agent.pid'
 @log_file = 'c66-agent.log'
@@ -456,7 +451,7 @@ command = nil
 
 OptionParser.new do |opts|
 	opts.banner = <<-EOF
-	Cloud 66 Agent. v#{str_version} (c) 2012 Cloud 66
+	Cloud 66 Agent. v#{Agent::Version.current} (c) 2012 Cloud 66
 	For more information please visit http://cloud66.com
 
 	Usage: c66-agent [register|unregister|start|stop] [options]
