@@ -13,7 +13,10 @@ module Agent
 		#  Defines the minor version
 		# PATCH:
 		#  Defines the patch version
-		MAJOR, MINOR, PATCH = 0, 0, 9
+		MAJOR, MINOR, PATCH  = 0, 0, 10
+
+		#ie. PRERELEASE_MODIFIER = 'beta1'
+		PRERELEASE_MODIFIER = nil
 
 		##
 		# Returns the major version ( big release based off of multiple minor releases )
@@ -34,9 +37,15 @@ module Agent
 		end
 
 		##
+		# Returns the prerelease modifier ( not quite ready for public consumption )
+		def self.prerelease_modifier
+			PRERELEASE_MODIFIER
+		end
+
+		##
 		# Returns the current version of the Backup gem ( qualified for the gemspec )
 		def self.current
-			"#{major}.#{minor}.#{patch}"
+			prerelease_modifier.nil? ? "#{major}.#{minor}.#{patch}" : "#{major}.#{minor}.#{patch}.#{prerelease_modifier}"
 		end
 
 	end
