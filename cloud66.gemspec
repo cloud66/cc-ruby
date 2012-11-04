@@ -1,4 +1,5 @@
 require 'rake'
+require File.expand_path('lib/version')
 
 Gem::Specification.new do |gem|
   gem.name        = 'cloud66'
