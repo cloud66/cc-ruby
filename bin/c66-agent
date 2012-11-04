@@ -210,15 +210,18 @@ def stop(signalCatch = false)
 		exit -1
 	end
 
-	load_config
-	@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
-	puts "Stopping the Cloud 66 Agent..."
-	@log.debug "Stopping the Cloud 66 Agent..."
-
 	begin
-		@quartz.status(2)
+		load_config
+		@quartz = CloudQuartz.new(:api_key => @api_key, :url => @url, :agent_id => @agent_id, :secret_key => @secret_key)
+		puts "Stopping the Cloud 66 Agent..."
+		@log.debug "Stopping the Cloud 66 Agent..."
+
+		begin
+			@quartz.status(2)
+		rescue
+		end
+	ensure
 		EM.stop
-	rescue
 	end
 
 	pid = get_pid
