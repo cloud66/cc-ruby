@@ -10,7 +10,7 @@ Gem::Specification.new do |gem|
   gem.description = "See http://cloud66.com for more info"
   gem.authors     = ["Cloud 66"]
   gem.email       = 'hello@cloud66.com'
-  gem.files       = FileList["lib/cloud-quartz.rb", "lib/client_auth.rb", 'lib/plugins/**/*.rb'].to_a
+  gem.files       = FileList["lib/version.rb", "lib/cloud-quartz.rb", "lib/client_auth.rb", 'lib/plugins/**/*.rb'].to_a
   gem.add_dependency('httparty', '>= 0.8.1')
   gem.add_dependency('json', '>= 1.6.3')
   gem.add_dependency('eventmachine', '>=0.12.0')
