@@ -4,7 +4,7 @@ require 'yaml'
 require File.expand_path("../../lib/cloud-quartz", __FILE__)
 require File.expand_path('../../lib/version', __FILE__)
 require File.expand_path("../../lib/client_auth", __FILE__)
-require File.expand_path("../../lib/monitor_utils", __FILE__)
+require File.expand_path("../../lib/vital_signs_utils", __FILE__)
 require 'optparse'
 require 'socket'
 require 'logger'
@@ -405,7 +405,9 @@ end
 def update_vital_signs
 	@log.debug "Updating vital signs"
 	begin
-		data = { :space => MonitorUtils.get_free_space_info }
+		data = {}
+		data[:space] = VitalSignsUtils.get_free_space_info
+		data[:network] = VitalSignsUtils.get_network_info
 		@quartz.send_vital_signs(data)
 	rescue => exc
 		@log.error "Failed to update vital signs due to #{exc.message}"

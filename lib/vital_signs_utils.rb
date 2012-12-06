@@ -2,11 +2,11 @@ require 'sys/filesystem'
 require 'socket'
 require 'open-uri'
 
-class MonitorUtils
+class VitalSignsUtils
 
 	def self.get_free_space_info
 
-		space_info = {}
+		space_info = { }
 		Sys::Filesystem.mounts do |mount|
 			stat = Sys::Filesystem.stat(mount.mount_point)
 
@@ -21,6 +21,16 @@ class MonitorUtils
 		end
 
 		return space_info
+	end
+
+	def self.get_network_info
+
+		address_infos = Socket.ip_address_list
+		private_ip_addresses = address_infos.select { |intf| intf.ipv4_private? }.map { |address| address.ip_address }
+		public_ip_addresses = address_infos.select { |intf| intf.ipv4? and !intf.ipv4_loopback? and !intf.ipv4_multicast? and !intf.ipv4_private? }.map { |address| address.ip_address }
+
+		ipaddr = UDPSocket.open {|s| s.connect('65.59.196.211'); s.addr.last }
+
 	end
 
 end
