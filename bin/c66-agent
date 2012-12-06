@@ -4,10 +4,12 @@ require 'yaml'
 require File.expand_path("../../lib/cloud-quartz", __FILE__)
 require File.expand_path('../../lib/version', __FILE__)
 require File.expand_path("../../lib/client_auth", __FILE__)
+require File.expand_path("../../lib/monitor_utils", __FILE__)
 require 'optparse'
 require 'socket'
 require 'logger'
 require 'highline/import'
+
 begin
 	gem 'eventmachine', '~>1.0.0.beta.4'
 	gem 'faye', '~>0.8.3'
@@ -400,6 +402,16 @@ def pulsate
 	end
 end
 
+def update_vital_signs
+	@log.debug "Updating vital signs"
+	begin
+		data = { :space => MonitorUtils.get_free_space_info }
+		@quartz.send_vital_signs(data)
+	rescue => exc
+		@log.error "Failed to update vital signs due to #{exc.message}"
+	end
+end
+
 def run
 	EM.run {
 		Signal.trap('INT') { @log.debug("trapped INT signal"); stop(true) }
@@ -407,10 +419,14 @@ def run
 
 		# pulse
 		pulsate
+		update_vital_signs
 		begin
 
 			EM.add_periodic_timer 60 do
 				pulsate
+			end
+			EM.add_periodic_timer 1800 do
+				update_vital_signs
 			end
 		rescue => exc
 			@log.error "Unable to add EM timer due to: #{exc.message}"

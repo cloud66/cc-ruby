@@ -43,6 +43,10 @@ class CloudQuartz
 		process(self.class.post("/agent/#{@agent_id}/initialize.json", { :headers => ClientAuth.build_headers(@api_key, @secret_key).merge({'Content-Type' => 'application/json'}), :body => data.to_json }))
 	end
 
+	def send_vital_signs(data)
+		process(self.class.post("/agent/#{@agent_id}/vitalsigns.json", { :headers => ClientAuth.build_headers(@api_key, @secret_key).merge({'Content-Type' => 'application/json'}), :body => data.to_json } ))
+	end
+
 	private
 
 	def process(response)
