@@ -29,8 +29,12 @@ class CloudQuartz
 		process(self.class.post("/job/#{job_id}/complete.json", { :headers => ClientAuth.build_headers(@api_key, @secret_key).merge({'Content-Type' => 'application/json'}), :body => data.to_json } ))
 	end
 
-	def pulse
+	def pulse_without_network_data
 		process(self.class.get("/agent/#{@agent_id}/pulse.json", { :headers => ClientAuth.build_headers(@api_key, @secret_key) } ))
+	end
+
+	def pulse_with_network_data(data)
+		process(self.class.post("/agent/#{@agent_id}/pulse.json", { :headers => ClientAuth.build_headers(@api_key, @secret_key).merge({'Content-Type' => 'application/json'}), :body => data.to_json } ))
 	end
 
 	def status(stat)

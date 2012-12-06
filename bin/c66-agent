@@ -28,6 +28,9 @@ ST_UNREGISTERED = 0
 ST_STOPPED = 1
 ST_STARTED = 2
 
+#number of pulses between pulses that check for network settings
+NETWORK_CHECK_PULSE_FREQUENCY = 5
+
 private
 
 def safefork
@@ -396,7 +399,13 @@ end
 def pulsate
 	@log.debug "Pulsate"
 	begin
-		@quartz.pulse
+		if @pulse_count == NETWORK_CHECK_PULSE_FREQUENCY
+			@pulse_count = 0
+			@quartz.pulse_with_network_data(VitalSignsUtils.get_network_info)
+		else
+			@quartz.pulse_without_network_data
+		end
+		@pulse_count += 1
 	rescue => exc
 		@log.error "Failed to pulsate due to #{exc.message}"
 	end
@@ -407,7 +416,6 @@ def update_vital_signs
 	begin
 		data = {}
 		data[:space] = VitalSignsUtils.get_free_space_info
-		data[:network] = VitalSignsUtils.get_network_info
 		@quartz.send_vital_signs(data)
 	rescue => exc
 		@log.error "Failed to update vital signs due to #{exc.message}"
@@ -420,6 +428,7 @@ def run
 		Signal.trap('TERM') { @log.debug("trapped TERM signal"); stop(true) }
 
 		# pulse
+		@pulse_count = NETWORK_CHECK_PULSE_FREQUENCY
 		pulsate
 		update_vital_signs
 		begin

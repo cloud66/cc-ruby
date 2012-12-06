@@ -25,8 +25,7 @@ class VitalSignsUtils
 		address_infos = Socket.ip_address_list
 		private_ip_addresses = address_infos.select { |intf| intf.ipv4_private? }.map { |address| address.ip_address }
 		public_ip_addresses = address_infos.select { |intf| intf.ipv4? and !intf.ipv4_loopback? and !intf.ipv4_multicast? and !intf.ipv4_private? }.map { |address| address.ip_address }
-
-		return { private: private_ip_addresses, public: public_ip_addresses }
+		return { network: { private: private_ip_addresses, public: public_ip_addresses } }
 	end
 end
 
