@@ -23,6 +23,7 @@ class VitalSignsUtils
 	def self.get_cpu_usage_info
 
 		#NOTE: we can get core-level info with mpstat -P ALL 1 1
+		#parse mpstat result
 		mpstat_result = `mpstat 1 1`
 
 #		mpstat_result = <<-SAMPLE
@@ -32,9 +33,6 @@ class VitalSignsUtils
 #10:42:51 AM  all    0.00    0.00    0.50    5.00    0.00    0.00    0.00    0.00   99.50
 #Average:     all    0.00    0.00    0.50    50.00    0.00    0.00    0.00    0.00   99.50
 #SAMPLE
-
-		#parse mpstat result
-		puts mpstat_result
 
 		#split output into lines
 		lines = mpstat_result.split(/\r?\n/)
