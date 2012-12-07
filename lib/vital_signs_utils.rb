@@ -22,14 +22,14 @@ class VitalSignsUtils
 
 	def self.get_cpu_usage_info
 
-		#mpstat_result = `mpstat 1 1`
-		mpstat_result = <<-SAMPLE
-Linux 3.2.0-23-generic (precise64) 	12/07/2012 	_x86_64_	(2 CPU)
-
-10:42:50 AM  CPU	%usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest   %idle
-10:42:51 AM  all    0.00    0.00    0.50    0.00    0.00    0.00    0.00    0.00   99.50
-Average:     all    0.00    0.00    0.50    0.00    0.00    0.00    0.00    0.00   99.50
-SAMPLE
+		mpstat_result = `mpstat 1 1`
+#		mpstat_result = <<-SAMPLE
+#Linux 3.2.0-23-generic (precise64) 	12/07/2012 	_x86_64_	(2 CPU)
+#
+#10:42:50 AM  CPU	%usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest   %idle
+#10:42:51 AM  all    0.00    0.00    0.50    0.00    0.00    0.00    0.00    0.00   99.50
+#Average:     all    0.00    0.00    0.50    0.00    0.00    0.00    0.00    0.00   99.50
+#SAMPLE
 
 		#parse mpstat result
 		puts mpstat_result
