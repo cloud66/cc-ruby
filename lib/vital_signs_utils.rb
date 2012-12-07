@@ -28,29 +28,37 @@ class VitalSignsUtils
 #		mpstat_result = <<-SAMPLE
 #Linux 3.2.0-23-generic (precise64) 	12/07/2012 	_x86_64_	(2 CPU)
 #
-#10:42:50 AM  CPU    %usr   %nice    %sys %idle    %irq   %soft  %steal  %guest   %idssle
+#10:42:50 AM  CPU    %usr   %nice    %sys   %ddle    %irq   %soft  %steal  %guest   %idle
 #10:42:51 AM  all    0.00    0.00    0.50    5.00    0.00    0.00    0.00    0.00   99.50
-#Average:     all    0.00    0.00    0.50    10.00    0.00    0.00    0.00    0.00   99.50
+#Average:     all    0.00    0.00    0.50    50.00    0.00    0.00    0.00    0.00   99.50
 #SAMPLE
 
 		#parse mpstat result
 		puts mpstat_result
 
+		#split output into lines
 		lines = mpstat_result.split(/\r?\n/)
+
+		#get rid of time (first 13 chars)
+		lines = lines.map { |line| line[13..-1] }
+
+		#get the header line and split into columns
 		header_line = lines.detect {|line| line =~ /%idle/}
-		position = header_line.index("%idle")
+		columns = header_line.split(/\s+/)
 
-		average_line = lines.detect {|line| line =~ /^Average/}
-		substring = average_line[position..-1].strip
+		#detect position of %idle column
+		idle_index = columns.index('%idle')
 
-		return {} unless substring =~ /^(?<value>\d+\.\d+)/
+		#get average line
+		average_line = lines[-1]
+		columns = average_line.split(/\s+/)
 
-		idle = $~[:value].to_f
+		#get idle value
+		idle_string = columns[idle_index]
+		idle_value = idle_string.to_f
 
-		average_utilization = 100.0 - idle
-
-		puts 'result'
-		puts average_utilization
+		#get average utilization value
+		return 100.0 - idle_value
 	end
 
 	def self.get_network_info
