@@ -1,8 +1,5 @@
 require 'sys/filesystem'
 require 'socket'
-require 'open-uri'
-require "sys/cpu"
-require "pp"
 
 class VitalSignsUtils
 
