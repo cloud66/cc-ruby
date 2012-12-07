@@ -3,7 +3,7 @@ require 'socket'
 
 class VitalSignsUtils
 
-	def self.get_free_space_info
+	def self.get_disk_usage_info
 		space_info = { }
 		Sys::Filesystem.mounts do |mount|
 			stat = Sys::Filesystem.stat(mount.mount_point)
@@ -26,7 +26,7 @@ class VitalSignsUtils
 
 		#NOTE: we can get core-level info with mpstat -P ALL 1 1
 		#parse mpstat result
-		mpstat_result = `mpstat 1 15`
+		mpstat_result = `mpstat 1 10`
 
 #		mpstat_result = <<-SAMPLE
 #Linux 3.2.0-23-generic (precise64) 	12/07/2012 	_x86_64_	(2 CPU)
@@ -57,14 +57,16 @@ class VitalSignsUtils
 		idle_string = columns[idle_index]
 		idle_value = idle_string.to_f
 
+		percent_used = 100.0 - idle_value
+
 		#get average utilization value
-		return 100.0 - idle_value
+		return { percent_used: percent_used, percent_free: idle_value }
 	end
 
 	def self.get_memory_usage_info
 
 		#parse sar result
-		sar_result = `sar -r 1 15`
+		sar_result = `sar -r 1 10`
 
 #		sar_result = <<-SAMPLE
 #Linux 3.2.0-31-virtual (ip-10-30-159-183) 	12/07/2012 	_x86_64_	(2 CPU)

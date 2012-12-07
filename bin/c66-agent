@@ -31,14 +31,6 @@ ST_STARTED = 2
 #number of pulses between pulses that check for network settings
 NETWORK_CHECK_PULSE_FREQUENCY = 5
 
-mem = VitalSignsUtils.get_memory_usage_info
-puts mem[:mb_free]
-puts mem[:mb_used]
-puts mem[:mb_total]
-puts mem[:percent_used]
-exit -1
-
-
 private
 
 def safefork
@@ -429,7 +421,28 @@ def update_vital_signs
 	@log.debug "Updating vital signs"
 	begin
 		data = { }
-		data[:space] = VitalSignsUtils.get_free_space_info
+
+		begin
+			data[:disk] = VitalSignsUtils.get_disk_usage_info
+		rescue => exc
+			@log.error "Failure during disk usage gathering due to #{exc}"
+			data[:disk] = { error: exc.message }
+		end
+
+		begin
+			data[:cpu] = VitalSignsUtils.get_cpu_usage_info
+		rescue => exc
+			@log.error "Failure during cpu usage gathering due to #{exc}"
+			data[:cpu] = { error: exc.message }
+		end
+
+		begin
+			data[:memory] = VitalSignsUtils.get_memory_usage_info
+		rescue => exc
+			@log.error "Failure during memory usage gathering due to #{exc}"
+			data[:memory] = { error: exc.message }
+		end
+
 		@quartz.send_vital_signs(data)
 	rescue => exc
 		@log.error "Failed to update vital signs due to #{exc.message}"
