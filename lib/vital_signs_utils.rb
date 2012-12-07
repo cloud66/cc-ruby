@@ -26,7 +26,7 @@ class VitalSignsUtils
 #		mpstat_result = <<-SAMPLE
 #Linux 3.2.0-23-generic (precise64) 	12/07/2012 	_x86_64_	(2 CPU)
 #
-#10:42:50 AM  CPU	%usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest   %idle
+#10:42:50 AM  CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest   %idle
 #10:42:51 AM  all    0.00    0.00    0.50    0.00    0.00    0.00    0.00    0.00   99.50
 #Average:     all    0.00    0.00    0.50    0.00    0.00    0.00    0.00    0.00   99.50
 #SAMPLE
@@ -37,11 +37,7 @@ class VitalSignsUtils
 		lines = mpstat_result.split(/\r?\n/)
 		header_line = lines.detect {|line| line =~ /%idle/}
 
-		puts ''
-		puts '[[splits]]'
-		puts header_line.split(/\t/)
-		puts ''
-		puts header_line
+		puts header_line.gsub!(//,'|')
 
 
 
