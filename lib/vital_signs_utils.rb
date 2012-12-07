@@ -26,7 +26,7 @@ class VitalSignsUtils
 
 		#NOTE: we can get core-level info with mpstat -P ALL 1 1
 		#parse mpstat result
-		mpstat_result = `mpstat 1 10`
+		mpstat_result = `mpstat 1 5`
 
 #		mpstat_result = <<-SAMPLE
 #Linux 3.2.0-23-generic (precise64) 	12/07/2012 	_x86_64_	(2 CPU)
@@ -66,7 +66,7 @@ class VitalSignsUtils
 	def self.get_memory_usage_info
 
 		#parse sar result
-		sar_result = `sar -r 1 10`
+		sar_result = `sar -r 1 5`
 
 #		sar_result = <<-SAMPLE
 #Linux 3.2.0-31-virtual (ip-10-30-159-183) 	12/07/2012 	_x86_64_	(2 CPU)
