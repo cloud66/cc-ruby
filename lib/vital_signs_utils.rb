@@ -37,7 +37,7 @@ class VitalSignsUtils
 		lines = mpstat_result.split(/\r?\n/)
 		header_line = lines.detect {|line| line =~ /%idle/}
 
-		puts header_line.gsub!(//,'|')
+		puts header_line.gsub!(/\s/,'|')
 
 
 
