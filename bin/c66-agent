@@ -31,7 +31,7 @@ ST_STARTED = 2
 #number of pulses between pulses that check for network settings
 NETWORK_CHECK_PULSE_FREQUENCY = 5
 
-
+data = {}
 begin
 	data[:disk] = VitalSignsUtils.get_disk_usage_info
 rescue => exc
