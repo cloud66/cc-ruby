@@ -22,13 +22,15 @@ class VitalSignsUtils
 
 	def self.get_cpu_usage_info
 
+		#NOTE: we can get core-level info with mpstat -P ALL 1 1
 		mpstat_result = `mpstat 1 1`
+
 #		mpstat_result = <<-SAMPLE
 #Linux 3.2.0-23-generic (precise64) 	12/07/2012 	_x86_64_	(2 CPU)
 #
-#10:42:50 AM  CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest   %idle
-#10:42:51 AM  all    0.00    0.00    0.50    0.00    0.00    0.00    0.00    0.00   99.50
-#Average:     all    0.00    0.00    0.50    0.00    0.00    0.00    0.00    0.00   99.50
+#10:42:50 AM  CPU    %usr   %nice    %sys %idle    %irq   %soft  %steal  %guest   %idssle
+#10:42:51 AM  all    0.00    0.00    0.50    5.00    0.00    0.00    0.00    0.00   99.50
+#Average:     all    0.00    0.00    0.50    10.00    0.00    0.00    0.00    0.00   99.50
 #SAMPLE
 
 		#parse mpstat result
@@ -36,13 +38,19 @@ class VitalSignsUtils
 
 		lines = mpstat_result.split(/\r?\n/)
 		header_line = lines.detect {|line| line =~ /%idle/}
+		position = header_line.index("%idle")
 
-		puts header_line.gsub!(/\s/,'|')
+		average_line = lines.detect {|line| line =~ /^Average/}
+		substring = average_line[position..-1].strip
 
+		return {} unless substring =~ /^(?<value>\d+\.\d+)/
 
+		idle = $~[:value].to_f
 
+		average_utilization = 100.0 - idle
 
-
+		puts 'result'
+		puts average_utilization
 	end
 
 	def self.get_network_info
