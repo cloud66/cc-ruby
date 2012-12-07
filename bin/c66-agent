@@ -463,7 +463,8 @@ def run
 			EM.add_periodic_timer 60 do
 				pulsate
 			end
-			EM.add_periodic_timer 1800 do
+			EM.add_periodic_timer 20 do
+			#EM.add_periodic_timer 1800 do
 				update_vital_signs
 			end
 		rescue => exc
