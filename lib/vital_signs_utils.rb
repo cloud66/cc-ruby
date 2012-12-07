@@ -14,7 +14,7 @@ class VitalSignsUtils
 			mb_free = Float(stat.block_size) * Float(stat.blocks_available) / 1000 / 1000
 			mb_total = Float(stat.block_size) * Float(stat.blocks) / 1000 / 1000
 			mb_used = mb_total - mb_free
-			percent_used = mb_used / mb_total * 100
+			percent_used =  mb_total > 0.0 ? mb_used / mb_total * 100 : 0.0
 
 			space_info[mount.mount_point] = { mb_free: mb_free, mb_used: mb_used, mb_total: mb_total, percent_used: percent_used }
 			mount.mount_point
