@@ -13,8 +13,10 @@ class VitalSignsUtils
 
 			mb_free = Float(stat.block_size) * Float(stat.blocks_available) / 1000 / 1000
 			mb_total = Float(stat.block_size) * Float(stat.blocks) / 1000 / 1000
+			mb_used = mb_total - mb_free
+			percent_used = mb_used / mb_total * 100
 
-			space_info[mount.mount_point] = { mb_free: mb_free, mb_total: mb_total }
+			space_info[mount.mount_point] = { mb_free: mb_free, mb_used: mb_used, mb_total: mb_total, percent_used: percent_used }
 			mount.mount_point
 		end
 		return space_info
@@ -24,7 +26,7 @@ class VitalSignsUtils
 
 		#NOTE: we can get core-level info with mpstat -P ALL 1 1
 		#parse mpstat result
-		mpstat_result = `mpstat 1 1`
+		mpstat_result = `mpstat 1 15`
 
 #		mpstat_result = <<-SAMPLE
 #Linux 3.2.0-23-generic (precise64) 	12/07/2012 	_x86_64_	(2 CPU)
@@ -57,6 +59,58 @@ class VitalSignsUtils
 
 		#get average utilization value
 		return 100.0 - idle_value
+	end
+
+	def self.get_memory_usage_info
+
+		#parse sar result
+		sar_result = `sar -r 1 15`
+
+#		sar_result = <<-SAMPLE
+#Linux 3.2.0-31-virtual (ip-10-30-159-183) 	12/07/2012 	_x86_64_	(2 CPU)
+#
+#12:23:38 PM kbmemfree kbmemused  %memused kbbuffers  kbcached  kbcommit   %commit  kbactive   kbinact
+#12:23:39 PM    436404   1296860     74.82     68204    693436    959636     36.20    800452    385916
+#12:23:40 PM    436156   1297108     74.84     68204    693436    959704     36.20    800436    385916
+#12:23:41 PM    436164   1297100     74.84     68204    693436    959704     36.20    800376    385916
+#12:23:42 PM    436032   1297232     74.84     68204    693436    959704     36.20    800520    385916
+#12:23:43 PM    436048   1297216     74.84     68204    693436    959704     36.20    800496    385916
+#12:23:44 PM    436032   1297232     74.84     68204    693436    959704     36.20    800440    385916
+#12:23:45 PM    436040   1297224     74.84     68204    693436    959704     36.20    800520    385916
+#12:23:46 PM    436040   1297224     74.84     68204    693436    959704     36.20    800436    385916
+#12:23:47 PM    436040   1297224     74.84     68204    693436    959704     36.20    800436    385916
+#12:23:48 PM    436048   1297216     74.84     68204    693436    959704     36.20    800436    385916
+#Average:       436100   1297164     74.84     68204    693436    959697     36.20    800455    385916
+#SAMPLE
+
+		#split output into lines
+		lines = sar_result.split(/\r?\n/)
+
+		#get rid of time (first 13 chars)
+		lines = lines.map { |line| line[12..-1].strip unless line[12..-1].nil?  }
+
+		#get the header line and split into columns
+		header_line = lines.detect {|line| line =~ /kbmemfree/}
+		columns = header_line.split(/\s+/)
+
+		#detect positions of memfree and memused columns
+		mem_free_index = columns.index('kbmemfree')
+		mem_used_index = columns.index('kbmemused')
+
+		#get average line
+		average_line = lines[-1]
+		columns = average_line.split(/\s+/)
+
+		#get values in mb
+		mb_free_string = columns[mem_free_index]
+		mb_free = mb_free_string.to_f / 1024
+		mb_used_string = columns[mem_used_index]
+		mb_used = mb_used_string.to_f / 1024
+		mb_total = mb_free + mb_used
+		percent_used = mb_used / mb_total * 100
+
+		#get average utilization value
+		return { mb_free: mb_free, mb_used: mb_used, mb_total: mb_total, percent_used: percent_used }
 	end
 
 	def self.get_network_info
