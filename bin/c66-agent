@@ -31,6 +31,31 @@ ST_STARTED = 2
 #number of pulses between pulses that check for network settings
 NETWORK_CHECK_PULSE_FREQUENCY = 5
 
+
+begin
+	data[:disk] = VitalSignsUtils.get_disk_usage_info
+rescue => exc
+	puts "Failure during disk usage gathering due to #{exc}"
+	data[:disk] = { error: exc.message }
+end
+
+begin
+	data[:cpu] = VitalSignsUtils.get_cpu_usage_info
+rescue => exc
+	puts "Failure during cpu usage gathering due to #{exc}"
+	data[:cpu] = { error: exc.message }
+end
+
+begin
+	data[:memory] = VitalSignsUtils.get_memory_usage_info
+rescue => exc
+	puts "Failure during memory usage gathering due to #{exc}"
+	data[:memory] = { error: exc.message }
+end
+
+puts data
+exit -1
+
 private
 
 def safefork
