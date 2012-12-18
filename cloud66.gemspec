@@ -5,7 +5,7 @@ Gem::Specification.new do |gem|
   gem.name        = 'cloud66'
   gem.version     = Agent::Version.current
   gem.platform    = Gem::Platform::RUBY
-  gem.date        = '2012-12-06'
+  gem.date        = '2012-12-18'
   gem.summary     = "Cloud 66 Server Agent"
   gem.description = "See http://cloud66.com for more info"
   gem.authors     = ["Cloud 66"]
