@@ -15,7 +15,7 @@ class Rake < QuartzPlugin
 		payload = payload(message)
 		task = payload['task']
 		location = payload['location']
-		params = payload['params']
+		params = payload['parameters']
 		@log.info "Rake #{task} in #{location} with params:#{params}"
 
 		begin
