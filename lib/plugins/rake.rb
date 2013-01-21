@@ -19,7 +19,8 @@ class Rake < QuartzPlugin
 		@log.info "Rake #{task} in #{location} with params:#{params}"
 
 		begin
-			result = run_shell("bundle exec rake #{task} #{params}")
+			command = "cd #{location} && bundle exec rake #{task} #{params}"
+			result = run_shell(command)
 			run_result(result[:ok], result[:message])
 		rescue => ex
 			run_result(false, "Failed to run rake due to #{ex}")
