@@ -346,18 +346,19 @@ def get_job
 				# get the plugin
 				if @plugins.include?(guid)
 					plugin = @plugins[guid]
-					# run it
+
+					#run the job (new thread)
 					operation = proc { run_plugin(plugin, message) }
 					EM.defer(operation)
+
+					#drain the queue until it is empty
+					get_job
 				else
 					@log.error "No plugin found with uid #{guid}"
 					job_id = message['job_id']
 					data = { :run_start => Time.now.utc.to_i, :run_end => Time.now.utc.to_i, :agent_uid => @agent_id, :ok => false, :fail_reason => "Requested plugin not found. Does this agent support this job type?" }
 					@quartz.post_results(job_id, data)
 				end
-				#else
-				#dropping this due to proliferation of log output
-				#@log.debug 'No jobs to run'
 			end
 		else
 			@log.error "Failed to retrieve job due to #{result['error']}"
@@ -482,7 +483,8 @@ def run
 			end
 		else
 			@log.info "Checking for new jobs every 60 seconds"
-			EM.add_periodic_timer 60 do
+			#reduced job check frequency (for stale checker)
+			EM.add_periodic_timer 45 do
 				get_job
 			end
 		end
