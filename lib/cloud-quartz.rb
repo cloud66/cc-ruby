@@ -29,11 +29,11 @@ class CloudQuartz
 		process(self.class.post("/job/#{job_id}/complete.json", { :headers => ClientAuth.build_headers(@api_key, @secret_key).merge({'Content-Type' => 'application/json'}), :body => data.to_json } ))
 	end
 
-	def pulse_without_network_data
+	def pulse_without_ip_address
 		process(self.class.get("/agent/#{@agent_id}/pulse.json", { :headers => ClientAuth.build_headers(@api_key, @secret_key) } ))
 	end
 
-	def pulse_with_network_data(data)
+	def pulse_with_ip_address(data)
 		process(self.class.post("/agent/#{@agent_id}/pulse.json", { :headers => ClientAuth.build_headers(@api_key, @secret_key).merge({'Content-Type' => 'application/json'}), :body => data.to_json } ))
 	end
 
@@ -42,8 +42,7 @@ class CloudQuartz
 		process(self.class.post("/agent/#{@agent_id}/status.json", { :headers => ClientAuth.build_headers(@api_key, @secret_key).merge({'Content-Type' => 'application/json'}), :body => data.to_json }))
 	end
 
-	def init(version, plugins)
-		data = { :version => version, :plugins => plugins }
+	def init(data)
 		process(self.class.post("/agent/#{@agent_id}/initialize.json", { :headers => ClientAuth.build_headers(@api_key, @secret_key).merge({'Content-Type' => 'application/json'}), :body => data.to_json }))
 	end
 

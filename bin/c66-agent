@@ -255,7 +255,12 @@ def start
 	load_plugins
 
 	begin
-		@log.info @quartz.init(Agent::Version.current, plugin_meta_data)
+		begin
+			facter_data = VitalSignsUtils.get_facter_info
+		rescue => exc
+			facter_data = {}
+		end
+		@log.info @quartz.init({ :version => Agent::Version.current, plugins: plugin_meta_data, facter: facter_data })
 	rescue => exc
 		message = exc.message
 		if message =~ /Couldn't find Agent with uid =/
@@ -405,13 +410,13 @@ def pulsate
 			@pulse_count = 0
 
 			begin
-				@quartz.pulse_with_network_data(VitalSignsUtils.get_network_info)
+				@quartz.pulse_with_ip_address(VitalSignsUtils.get_ip_address_info)
 			rescue => exc
 				#do a normal pulse if we have any detection issues
-				@quartz.pulse_without_network_data
+				@quartz.pulse_without_ip_address
 			end
 		else
-			@quartz.pulse_without_network_data
+			@quartz.pulse_without_ip_address
 		end
 		@pulse_count += 1
 	rescue => exc
@@ -421,7 +426,7 @@ end
 
 def update_vital_signs
 	begin
-		data = { }
+		data = {}
 
 		begin
 			data[:disk] = VitalSignsUtils.get_disk_usage_info
@@ -504,7 +509,7 @@ Dir.mkdir(@cb_tmp_dir) if !File.exists?(@cb_tmp_dir)
 @pid_full = File.join(@cb_tmp_dir, @pid_file)
 @log_full = File.join(@cb_tmp_dir, @log_file)
 commands = %w[register unregister start stop]
-@plugins = { }
+@plugins = {}
 command = nil
 
 

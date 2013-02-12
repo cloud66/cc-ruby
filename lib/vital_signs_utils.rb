@@ -4,7 +4,7 @@ require 'socket'
 class VitalSignsUtils
 
 	def self.get_disk_usage_info
-		space_info = { }
+		space_info = {}
 		Sys::Filesystem.mounts do |mount|
 			stat = Sys::Filesystem.stat(mount.mount_point)
 
@@ -14,7 +14,7 @@ class VitalSignsUtils
 			mb_free = Float(stat.block_size) * Float(stat.blocks_available) / 1000 / 1000
 			mb_total = Float(stat.block_size) * Float(stat.blocks) / 1000 / 1000
 			mb_used = mb_total - mb_free
-			percent_used =  mb_total > 0.0 ? mb_used / mb_total * 100 : 0.0
+			percent_used = mb_total > 0.0 ? mb_used / mb_total * 100 : 0.0
 
 			space_info[mount.mount_point] = { mb_free: mb_free, mb_used: mb_used, mb_total: mb_total, percent_used: percent_used }
 			mount.mount_point
@@ -36,14 +36,14 @@ class VitalSignsUtils
 #Average:     all    0.00    0.00    0.50    50.00    0.00    0.00    0.00    0.00   99.50
 #SAMPLE
 
-		#split output into lines
+#split output into lines
 		lines = mpstat_result.split(/\r?\n/)
 
 		#get rid of time (first 13 chars)
 		lines = lines.map { |line| line[13..-1] }
 
 		#get the header line and split into columns
-		header_line = lines.detect {|line| line =~ /%idle/}
+		header_line = lines.detect { |line| line =~ /%idle/ }
 		columns = header_line.split(/\s+/)
 
 		#detect position of %idle column
@@ -85,14 +85,14 @@ class VitalSignsUtils
 #Average:       436100   1297164     74.84     68204    693436    959697     36.20    800455    385916
 #SAMPLE
 
-		#split output into lines
+#split output into lines
 		lines = sar_result.split(/\r?\n/)
 
 		#get rid of time (first 13 chars)
-		lines = lines.map { |line| line[12..-1].strip unless line[12..-1].nil?  }
+		lines = lines.map { |line| line[12..-1].strip unless line[12..-1].nil? }
 
 		#get the header line and split into columns
-		header_line = lines.detect {|line| line =~ /kbmemfree/}
+		header_line = lines.detect { |line| line =~ /kbmemfree/ }
 		columns = header_line.split(/\s+/)
 
 		#detect positions of memfree and memused columns
@@ -115,11 +115,45 @@ class VitalSignsUtils
 		return { mb_free: mb_free, mb_used: mb_used, mb_total: mb_total, percent_used: percent_used }
 	end
 
-	def self.get_network_info
-		address_infos = Socket.ip_address_list
-		private_ip_addresses = address_infos.select { |intf| intf.ipv4_private? }.map { |address| address.ip_address }
-		public_ip_addresses = address_infos.select { |intf| intf.ipv4? and !intf.ipv4_loopback? and !intf.ipv4_multicast? and !intf.ipv4_private? }.map { |address| address.ip_address }
-		return { network: { private: private_ip_addresses, public: public_ip_addresses } }
+	def self.get_facter_info
+		# facter command
+		facter_text = `sudo facter`
+		return parse_facter_text(facter_text)
+	end
+
+	def self.get_ip_address_info
+		# facter command for ip information
+		facter_text = `facter ipaddress ec2_public_ipv4`
+		ip_hash = parse_facter_text(facter_text)
+
+		# return ec2 info first (most specific)
+		return { :ip_address => ip_hash['ec2_public_ipv4'] } if ip_hash.has_key?('ec2_public_ipv4')
+
+		# return ipaddress next (general)
+		return { :ip_address => ip_hash['ipaddress'] } if ip_hash.has_key?('ipaddress')
+
+		# don't have any ip address info
+		return {}
+	end
+
+	# parse the factor text, not using YAML due to YAML parsing issues, and facter JSON output not working
+	def self.parse_facter_text(facter_text)
+		facter_hash = {}
+		facter_text.lines.each do |line|
+			split = line.split('=>')
+			key = split[0]
+			if split.size == 2
+				value = split[1]
+				if !value.nil?
+					value = value.strip
+					if !value.empty?
+						key = key.strip
+						facter_hash[key] = value
+					end
+				end
+			end
+		end
+		return facter_hash
 	end
 end
 
