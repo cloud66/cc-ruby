@@ -146,7 +146,8 @@ class VitalSignsUtils
 				value = split[1]
 				if !value.nil?
 					value = value.strip
-					if !value.empty?
+					# exclude empty or long results (like ssh keys)
+					if !value.empty? && value.size < 100
 						key = key.strip
 						facter_hash[key] = value
 					end
