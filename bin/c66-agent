@@ -84,7 +84,18 @@ end
 
 def save_config
 	Dir.mkdir(@config_dir) if !FileTest::directory?(@config_dir)
-	File.open(@config_full, 'w+') { |out| YAML::dump({ 'api_key' => @api_key, 'agent_id' => @agent_id, 'secret_key' => @secret_key }, out) }
+	File.open(@config_full, 'w+') do |out|
+		data = {
+			'api_key' => @api_key,
+			'agent_id' => @agent_id,
+			'secret_key' => @secret_key
+		}
+		# store the url if it is different
+		data['url'] = @url if @url != 'https://api.cloud66.com'
+		# store the faye url if it is different
+		data['faye_url'] = @faye_url if @faye_url != 'https://sockets.cloud66.com/push'
+		YAML::dump(data, out)
+	end
 end
 
 def load_config
@@ -94,6 +105,14 @@ def load_config
 		@api_key = config['api_key']
 		@agent_id = config['agent_id']
 		@secret_key = config['secret_key']
+
+		# set if it exists in the config
+		config_url = config['url']
+		@url = config_url if !config_url.nil? && !config_url.strip.empty?
+
+		# set if it exists in the config
+		config_faye_url = config['faye_url']
+		@faye_url = config_faye_url if !config_faye_url.nil? && !config_faye_url.strip.empty?
 	end
 end
 
