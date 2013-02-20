@@ -517,10 +517,10 @@ end
 
 public
 
-config_file = 'cloud66.yaml'
+config_file = 'agent.yml'
 @pid_file = 'c66-agent.pid'
 @log_file = 'c66-agent.log'
-@config_dir = File.join(File.expand_path('~'), '.cloud66')
+@config_dir = '/etc/cloud66/'
 @config_full = File.join(@config_dir, config_file)
 @cb_tmp_dir = '/tmp/cloud66'
 Dir.mkdir(@cb_tmp_dir) if !File.exists?(@cb_tmp_dir)
