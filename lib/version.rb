@@ -16,7 +16,7 @@ module Agent
 		MAJOR, MINOR, PATCH  = 0, 0, 23
 
 		#ie. PRERELEASE_MODIFIER = 'beta1'
-		PRERELEASE_MODIFIER = 'pre'
+		PRERELEASE_MODIFIER = 'pre2'
 
 		##
 		# Returns the major version ( big release based off of multiple minor releases )
