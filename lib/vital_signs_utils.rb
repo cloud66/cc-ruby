@@ -124,28 +124,26 @@ class VitalSignsUtils
 	def self.get_ip_address_info
 		# facter command for ip information (collect up to 5 local ip addresses)
 
-		facter_text = `facter ipaddress ec2_public_ipv4 ipaddress_eth0 ipaddress_eth1 ipaddress_eth2 ipaddress_eth3 ipaddress_eth4`
+		facter_text = `facter ipaddress ec2_public_ipv4 ipaddress_eth0 ipaddress6 ipaddress6_eth0`
 		ip_hash = parse_facter_text(facter_text)
 
-		result = Hash.new
+		result = {}
 
 		if ip_hash.has_key?('ec2_public_ipv4')
 			# return ec2 info first (most specific)
-			result[:external_ip_address] = ip_hash['ec2_public_ipv4']
+			result[:ext_ipv4] = ip_hash['ec2_public_ipv4']
 		elsif ip_hash.has_key?('ipaddress')
 			# return ipaddress next (general)
-			result[:external_ip_address] = ip_hash['ipaddress']
+			result[:ext_ipv4] = ip_hash['ipaddress']
 		end
-
-		result[:internal_ip_address] = []
-		result[:internal_ip_address] << ip_hash['ipaddress_eth0'] if ip_hash.has_key?('ipaddress_eth0')
-		result[:internal_ip_address] << ip_hash['ipaddress_eth1'] if ip_hash.has_key?('ipaddress_eth1')
-		result[:internal_ip_address] << ip_hash['ipaddress_eth2'] if ip_hash.has_key?('ipaddress_eth2')
-		result[:internal_ip_address] << ip_hash['ipaddress_eth3'] if ip_hash.has_key?('ipaddress_eth3')
-		result[:internal_ip_address] << ip_hash['ipaddress_eth4'] if ip_hash.has_key?('ipaddress_eth4')
+		result[:int_ipv4] = ip_hash['ipaddress_eth0'] if ip_hash.has_key?('ipaddress_eth0')
+		result[:ext_ipv6] = ip_hash['ipaddress6'] if ip_hash.has_key?('ipaddress6')
+		result[:int_ipv6] = ip_hash['ipaddress6_eth0'] if ip_hash.has_key?('ipaddress6_eth0')
 
 		# don't have any ip address info
-		return result
+		return {} if result.empty?
+		# return ip address info
+		return { :ip_addresses => result }
 	end
 
 	# parse the factor text, not using YAML due to YAML parsing issues, and facter JSON output not working
