@@ -320,11 +320,10 @@ def handle(result)
 	if !result.nil? && result.is_a?(Hash) && result['shut_down']
 		puts "Agent shutting down (server sent shut_down command)"
 		@log.debug "Agent shutting down (server sent shut_down command)"
-		# make sure bluepill doesn't monitor this anymore
+		# ensure bluepill doesn't bring this up again
 		`sudo bluepill cloud66_agent unmonitor` rescue nil
-		# remove the agent pill file (so it doesn't start on reboot)
-		`sudo rm -f /etc/bluepill/autostart/cloud66_agent.pill` rescue nil
-		stop
+		# stop the agent
+		stop(true)
 	end
 end
 
