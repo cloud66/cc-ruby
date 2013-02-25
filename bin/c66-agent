@@ -310,12 +310,22 @@ def start
 	else
 		run
 	end
-
-
 	exit 0
 end
 
 private
+
+def handle(result)
+	# if the server sends a shutdown signal
+	if !result.nil? && result.is_a?(Hash) && result['shut_down']
+		puts "Agent shutting down (server sent shut_down command)"
+		@log.debug "Agent shutting down (server sent shut_down command)"
+		# ensure bluepill doesn't bring this up again
+		`sudo bluepill cloud66_agent unmonitor` rescue nil
+		# stop the agent
+		stop(true)
+	end
+end
 
 def load_plugins
 	@load_path = File.expand_path(File.join(File.dirname(__FILE__), '../lib/plugins'))
@@ -351,7 +361,6 @@ def plugin_meta_data
 	@plugins.each do |k, v|
 		result << v.info
 	end
-
 	result
 end
 
@@ -429,13 +438,14 @@ def pulsate
 			@pulse_count = 0
 
 			begin
-				@quartz.pulse_with_ip_address(VitalSignsUtils.get_ip_address_info)
+				handle(@quartz.pulse_with_ip_address(VitalSignsUtils.get_ip_address_info))
 			rescue => exc
 				#do a normal pulse if we have any detection issues
-				@quartz.pulse_without_ip_address
+				handle(@quartz.pulse_without_ip_address)
 			end
 		else
-			@quartz.pulse_without_ip_address
+			handle(@quartz.pulse_without_ip_address)
+
 		end
 		@pulse_count += 1
 	rescue => exc
@@ -468,7 +478,7 @@ def update_vital_signs
 			data[:memory] = { error: exc.message }
 		end
 
-		@quartz.send_vital_signs(data)
+		handle(@quartz.send_vital_signs(data))
 	rescue => exc
 		@log.error "Failed to update vital signs due to #{exc.message}"
 	end
@@ -517,10 +527,10 @@ end
 
 public
 
-config_file = 'cloud66.yaml'
+config_file = 'agent.yml'
 @pid_file = 'c66-agent.pid'
 @log_file = 'c66-agent.log'
-@config_dir = File.join(File.expand_path('~'), '.cloud66')
+@config_dir = '/etc/cloud66/'
 @config_full = File.join(@config_dir, config_file)
 @cb_tmp_dir = '/tmp/cloud66'
 Dir.mkdir(@cb_tmp_dir) if !File.exists?(@cb_tmp_dir)

@@ -122,18 +122,28 @@ class VitalSignsUtils
 	end
 
 	def self.get_ip_address_info
-		# facter command for ip information
-		facter_text = `facter ipaddress ec2_public_ipv4`
+		# facter command for ip information (collect up to 5 local ip addresses)
+
+		facter_text = `facter ipaddress ec2_public_ipv4 ipaddress_eth0 ipaddress6 ipaddress6_eth0`
 		ip_hash = parse_facter_text(facter_text)
 
-		# return ec2 info first (most specific)
-		return { :ip_address => ip_hash['ec2_public_ipv4'] } if ip_hash.has_key?('ec2_public_ipv4')
+		result = {}
 
-		# return ipaddress next (general)
-		return { :ip_address => ip_hash['ipaddress'] } if ip_hash.has_key?('ipaddress')
+		if ip_hash.has_key?('ec2_public_ipv4')
+			# return ec2 info first (most specific)
+			result[:ext_ipv4] = ip_hash['ec2_public_ipv4']
+		elsif ip_hash.has_key?('ipaddress')
+			# return ipaddress next (general)
+			result[:ext_ipv4] = ip_hash['ipaddress']
+		end
+		result[:int_ipv4] = ip_hash['ipaddress_eth0'] if ip_hash.has_key?('ipaddress_eth0')
+		result[:ext_ipv6] = ip_hash['ipaddress6'] if ip_hash.has_key?('ipaddress6')
+		result[:int_ipv6] = ip_hash['ipaddress6_eth0'] if ip_hash.has_key?('ipaddress6_eth0')
 
 		# don't have any ip address info
-		return {}
+		return {} if result.empty?
+		# return ip address info
+		return { :ip_addresses => result }
 	end
 
 	# parse the factor text, not using YAML due to YAML parsing issues, and facter JSON output not working
