@@ -13,10 +13,10 @@ module Agent
 		#  Defines the minor version
 		# PATCH:
 		#  Defines the patch version
-		MAJOR, MINOR, PATCH  = 0, 0, 23
+		MAJOR, MINOR, PATCH  = 0, 0, 24
 
 		#ie. PRERELEASE_MODIFIER = 'beta1'
-		PRERELEASE_MODIFIER = 'pre3'
+		PRERELEASE_MODIFIER = nil
 
 		##
 		# Returns the major version ( big release based off of multiple minor releases )
