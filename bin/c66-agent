@@ -455,29 +455,11 @@ end
 
 def update_vital_signs
 	begin
-		data = {}
-
-		begin
-			data[:disk] = VitalSignsUtils.get_disk_usage_info
-		rescue => exc
-			@log.error "Failure during disk usage gathering due to #{exc}"
-			data[:disk] = { error: exc.message }
-		end
-
-		begin
-			data[:cpu] = VitalSignsUtils.get_cpu_usage_info
-		rescue => exc
-			@log.error "Failure during cpu usage gathering due to #{exc}"
-			data[:cpu] = { error: exc.message }
-		end
-
-		begin
-			data[:memory] = VitalSignsUtils.get_memory_usage_info
-		rescue => exc
-			@log.error "Failure during memory usage gathering due to #{exc}"
-			data[:memory] = { error: exc.message }
-		end
-
+		data = {
+			:disk => VitalSignsUtils.get_disk_usage_info,
+			:cpu => VitalSignsUtils.get_cpu_usage_info,
+			:memory => VitalSignsUtils.get_memory_usage_info
+		}
 		handle(@quartz.send_vital_signs(data))
 	rescue => exc
 		@log.error "Failed to update vital signs due to #{exc.message}"
