@@ -1,5 +1,5 @@
-access_key 			: AKIAJWKEFBY7FUPG6DTA
-secret_key 			: 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
+access_key 			: na
+secret_key 			: na
 bucket 				: testbucket.cldblx
 region				: eu-west-1
 remote_path			: "/test/backups"
